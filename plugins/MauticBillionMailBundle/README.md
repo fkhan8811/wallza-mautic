@@ -40,7 +40,7 @@ billionmail+smtp://USER:PASSWORD@mail.example.com:587?auto_tls=true&require_tls=
 - `local_domain`: explicit EHLO/HELO name.
 - `source_ip`: bind the SMTP socket to a source IP when the host supports it.
 
-TLS certificate verification is enabled by default. This plugin intentionally does not add an option to turn it off.
+TLS is required by default, and certificate verification is enabled. An administrator can explicitly disable the TLS requirement with `require_tls=false` only when the endpoint is intentionally trusted on a private network. This plugin intentionally does not add an option to turn certificate verification off.
 
 ## Important distinction: BillionMail API versus SMTP
 
