@@ -33,6 +33,7 @@ final class BillionMailTransportFactoryTest extends TestCase
         self::assertInstanceOf(EsmtpTransport::class, $transport);
         self::assertSame('mailer', $transport->getUsername());
         self::assertSame('secret', $transport->getPassword());
+        self::assertTrue($transport->isTlsRequired());
     }
 
     public function testSmtpsSchemeCreatesNativeEsmtpTransport(): void
