@@ -33,7 +33,7 @@ jobs:
           coverage: none
 
       - name: Validate root Composer metadata
-        run: composer validate --no-check-publish --no-check-lock --no-interaction
+        run: composer validate --no-check-publish --no-interaction
 
       - name: Validate BillionMail plugin Composer metadata
         working-directory: plugins/MauticBillionMailBundle
