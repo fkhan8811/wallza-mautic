@@ -43,7 +43,8 @@
 - [x] Add focused transport-factory PHPUnit test cases.
 - [x] Add the Mautic bundle DependencyInjection extension that loads `Config/services.php`, plus a container-registration test.
 - [x] Register the bundled plugin in root Composer `replace` and refresh `composer.lock` content hash.
-- [x] Dedicated push CI passed Composer metadata checks and PHP syntax lint on commit `b08fb63a7ad5d03922b7fda2c114353fe80c76ce`.
+- [x] Dedicated PR plugin CI passed on the latest PR head: root/plugin Composer metadata checks and PHP syntax lint for every plugin PHP file.
+- [ ] Full Mautic PHPUnit matrix, root Composer lock validation, Twig lint and static-analysis checks are still pending on GitHub.
 - [ ] Complete Mautic PHPUnit matrix, root Composer lock validation and static-analysis checks; upstream jobs were still queued at the last status check.
 - [x] Register the bundled plugin in the root Composer `replace` map and add a focused PHP/Composer CI workflow.
 - [ ] Confirm the new CI workflow runs successfully; run PHPUnit and Mautic container/plugin discovery in a complete Mautic environment.
