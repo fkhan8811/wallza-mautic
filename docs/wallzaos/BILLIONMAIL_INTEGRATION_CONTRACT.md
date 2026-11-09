@@ -48,7 +48,7 @@ The connected `fkhan8811/Whatsapp` backend uses the following tenant/auth model 
 - The organization is selected by an organization ID, but that ID is only a requested resource scope. Authorization is checked against `organization_members` (active membership where applicable) and/or `agents` rows matching both organization and authenticated user.
 - Privileged integration access is stricter: `authorizeMetaOrganization` resolves organization owner, `user_roles`, `organization_members`, and `agents`, then checks the `integrations.manage` permission through `permissions`, `role_permissions`, and `user_permissions_override`.
 - OAuth state in the backend uses an HMAC-signed payload plus a persisted one-time nonce and a short expiry. Meta webhooks are verified against the exact raw body using `X-Hub-Signature-256`.
-- The existing backend also has organization-scoped `email_mailboxes` and `email_credentials`; credential access must remain server-only.
+- The live `Wallza-Connect` Supabase schema contains organization-scoped `email_mailboxes` and `email_credentials`; the SMTP/IMAP credential columns are encrypted, and the credential table is RLS-scoped through its parent mailbox's organization. Decryption and SMTP use must stay on a trusted server.
 
 This is a reference contract for the WallzaOS integration layer, not proof that Mautic already enforces tenant boundaries. The Mautic plugin currently does not establish Supabase SSO, map Mautic users to organizations, or filter Mautic entities by organization. Do not expose a shared Mautic instance to multiple customer workspaces until that enforcement is implemented and tested across UI, API, CLI, Messenger workers, imports/exports and webhook delivery. In particular, do not pass a browser-supplied `organization_id` into a Mautic request and treat it as authorization.
 
@@ -82,7 +82,7 @@ This policy is a requirement, not a completed feature in the current branch.
 
 - Plugin discovery and service-container compilation.
 - SMTP authentication and TLS negotiation against the deployed BillionMail endpoint.
-- Single and batch campaign delivery.
+- Single sends and campaign sends through Mautic's per-contact SMTP path (this adapter does not implement provider-side tokenized batch sends).
 - Mautic message/campaign attribution remains intact.
 - Delivery, deferred, bounce and rejection reconciliation once a provider event contract is confirmed.
 - Duplicate provider event delivery.
