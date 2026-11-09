@@ -1,7 +1,8 @@
 # WallzaOS Mautic — Tenant Isolation Design
 
 **Status:** Design baseline; implementation not yet certified  
-**Baseline:** Mautic 7.2.2
+**Baseline:** Mautic 7.2.2  
+**Identity discovery:** The connected Lovable project named `WallzaOS` is documented as the public marketing website/admin CMS. Its inspected database has CMS tables plus `profiles`, `user_roles` and `websites`, but no tenant/workspace membership or subscription model. Its role model (`admin`, `editor`, `marketing`, `viewer`) is not a product-tenant authorization contract.
 
 ## 1. Security objective
 
