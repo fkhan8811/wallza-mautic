@@ -15,7 +15,7 @@
 |---|---|---|
 | Baseline and feature audit | Complete as documentation | Runtime build and CI have not yet been run. |
 | BillionMail SMTP adapter | Implemented in source; syntax CI added, runtime unverified | Native Symfony ESMTP transport plugin, Composer package metadata, focused PHPUnit tests and GitHub syntax/metadata workflow are committed. |
-| Delivery event reconciliation | Blocked | No supported provider webhook/signature contract has been identified in the inspected BillionMail fork. |
+| Delivery event reconciliation | Native IMAP path documented; provider webhooks blocked | Mautic already has native IMAP bounce/unsubscribe/FBL processing via `mautic:email:fetch`; BillionMail mailbox routing and live IMAP processing still need validation. No supported provider webhook/signature contract was identified in the inspected BillionMail fork. |
 | Tenant isolation | Auth contract identified; Mautic enforcement not implemented | `fkhan8811/Whatsapp` provides Supabase Auth + organizations + organization_members/agents + organization-scoped roles/permissions. Mautic SSO/user mapping/entity scoping remain required. |
 | Journey and campaign enhancements | Not started | Audit native capabilities first; avoid duplicating Mautic's existing engine. |
 | Segmentation and analytics enhancements | Not started | Need realistic data profiling before optimization. |
@@ -50,7 +50,9 @@
 - [ ] Confirm the new CI workflow runs successfully; run PHPUnit and Mautic container/plugin discovery in a complete Mautic environment.
 - [ ] Execute tests, compile the Mautic container, enable/discover plugin and validate a test send against deployed BillionMail.
 - [ ] Add authenticated delivery-event reconciliation if a supported provider webhook contract is confirmed.
-- [ ] Integrate suppression events and verify event attribution end-to-end.
+- [x] Document Mautic's native IMAP monitored-inbox flow for bounces, unsubscribe requests and feedback-loop messages.
+- [ ] Verify BillionMail delivers the relevant feedback messages to the configured IMAP folders and test Mautic DNC/stat updates end-to-end.
+- [ ] Add provider webhook reconciliation only if a supported signed webhook contract is confirmed.
 
 ### W3 — Campaign/journey improvements
 - Reuse native campaign execution and scheduling.
