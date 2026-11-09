@@ -1,0 +1,42 @@
+name: WallzaOS Mautic plugin checks
+
+on:
+  push:
+    branches:
+      - wallza/marketing-automation-upgrades
+    paths:
+      - "plugins/MauticBillionMailBundle/**"
+      - "composer.json"
+      - ".github/workflows/wallza-mautic-plugin-checks.yml"
+  pull_request:
+    branches:
+      - wallza/mautic-7.2.2
+    paths:
+      - "plugins/MauticBillionMailBundle/**"
+      - "composer.json"
+
+permissions:
+  contents: read
+
+jobs:
+  php-plugin-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer:v2
+          coverage: none
+
+      - name: Validate root Composer metadata
+        run: composer validate --no-check-publish --no-interaction
+
+      - name: Validate BillionMail plugin Composer metadata
+        run: composer validate plugins/MauticBillionMailBundle/composer.json --no-check-publish --no-interaction
+
+      - name: Lint plugin PHP files
+        run: find plugins/MauticBillionMailBundle -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l
