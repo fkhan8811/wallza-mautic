@@ -36,7 +36,7 @@ Optional controls supported by the adapter:
 - `local_domain` — explicit EHLO/HELO name.
 - `source_ip` — optional SMTP socket source IP.
 
-TLS certificate verification remains enabled. The adapter delegates to Symfony's native ESMTP transport. It does not implement a BillionMail HTTP API client or claim delivery-event synchronization.
+TLS is required by default and certificate verification remains enabled. The adapter delegates to Symfony's native ESMTP transport. It does not implement a BillionMail HTTP API client or claim delivery-event synchronization.
 
 **Implementation status:** source files and focused PHPUnit tests have been committed. Tests have not yet been executed in a Mautic runtime or CI environment. Do not mark this feature production-verified until the plugin is discovered by Mautic, the service container compiles, SMTP authentication/TLS succeeds, and a controlled test email is delivered.
 
@@ -88,7 +88,7 @@ Mautic 7.2.2's database configuration uses MySQL/MariaDB. WallzaOS's Supabase Po
 
 - Actual deployed BillionMail SMTP mailbox/submission hostname, port, TLS mode and credentials (credentials must never be committed to Git or exposed to browsers).
 - A supported BillionMail provider delivery-event/webhook contract, including signature verification rules, if available in the deployed version.
-- The populated WallzaOS application/backend repository and its trusted auth/tenant claims. The currently accessible `WallzaOS-Website` and `Wallza-2.0` repositories are empty; `wallza-ops-hub` is a separate painting operations CRM.
+- The populated WallzaOS product-app/backend repository and its trusted auth/tenant claims. The connected Lovable project named `WallzaOS` is the public website/admin CMS (TanStack Start + Supabase) with CMS/RBAC tables, not the product-app tenant model. Its inspected schema contains no tenant/workspace memberships or subscription entitlements; `WallzaOS-Website` and `Wallza-2.0` GitHub repositories are empty, and `wallza-ops-hub` is a separate painting operations CRM.
 - Sending-domain and per-tenant credential strategy.
 
 Until tenant identity and enforcement are implemented end-to-end, this Mautic instance must not be exposed as a shared multi-tenant SaaS service.
