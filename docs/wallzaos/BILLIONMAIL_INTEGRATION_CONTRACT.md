@@ -38,7 +38,7 @@ Optional controls supported by the adapter:
 
 TLS is required by default and certificate verification remains enabled. The adapter delegates to Symfony's native ESMTP transport. It uses Mautic's regular per-contact SMTP send path; it does not implement Mautic's optional `TokenTransportInterface` provider-side recipient batching or asynchronous provider callbacks. It does not implement a BillionMail HTTP API client or claim delivery-event synchronization.
 
-**Implementation status:** source files and focused PHPUnit tests have been committed. Tests have not yet been executed in a Mautic runtime or CI environment. Do not mark this feature production-verified until the plugin is discovered by Mautic, the service container compiles, SMTP authentication/TLS succeeds, and a controlled test email is delivered.
+**Implementation status:** source files, Composer package metadata, the bundle DependencyInjection extension and focused PHPUnit tests are committed. The dedicated push CI completed successfully for root/plugin Composer metadata and PHP syntax checks. The full Mautic PHPUnit matrix, the actual installed Mautic container/plugin discovery check, and SMTP delivery against the deployed BillionMail mailbox have not yet passed. Do not mark this feature production-verified until all three are completed.
 
 ## 3. WallzaOS backend identity contract discovered
 
@@ -92,11 +92,19 @@ This policy is a requirement, not a completed feature in the current branch.
 - Tenant A events cannot mutate Tenant B recipient status.
 - Transient SMTP failure retry and permanent SMTP failure handling.
 
-## 7. Deployment dependency
+## 7. Render deployment inspection
+
+The connected Render `My Workspace` was inspected. It currently contains the production Node service `Whatsapp` and the Node staging service `wallza-connect-staging`, both backed by the `fkhan8811/Whatsapp` repository. No Mautic service or Wallza Mautic database is present in that workspace. The only listed Render PostgreSQL database belongs to Seasons of Lawn and is suspended; it must not be reused for Mautic.
+
+The production WhatsApp service is live, on its `main` branch, Singapore region and Free plan; auto-deploy is disabled. The staging service is also in Singapore and tracks the Meta security-fix branch. No service configuration, secrets, production databases or deployment state were changed during this inspection.
+
+Mautic deployment must be validated on its actual target (the planned Oracle host or a separately provisioned service). The WhatsApp Node service and Supabase PostgreSQL are not substitutes for Mautic's MySQL/MariaDB application database.
+
+## 8. Deployment dependency
 
 Mautic 7.2.2's database configuration uses MySQL/MariaDB. WallzaOS's Supabase PostgreSQL remains separate for SaaS control-plane data. Do not point Mautic's Doctrine database at Supabase PostgreSQL.
 
-## 8. Remaining inputs and blockers
+## 9. Remaining inputs and blockers
 
 - Actual deployed BillionMail SMTP mailbox/submission hostname, port, TLS mode and credentials (credentials must never be committed to Git or exposed to browsers).
 - A supported BillionMail provider delivery-event/webhook contract, including signature verification rules, if available in the deployed version.
