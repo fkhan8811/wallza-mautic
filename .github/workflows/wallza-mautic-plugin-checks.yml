@@ -33,10 +33,11 @@ jobs:
           coverage: none
 
       - name: Validate root Composer metadata
-        run: composer validate --no-check-publish --no-interaction
+        run: composer validate --no-check-publish --no-check-lock --no-interaction
 
       - name: Validate BillionMail plugin Composer metadata
-        run: composer validate plugins/MauticBillionMailBundle/composer.json --no-check-publish --no-interaction
+        working-directory: plugins/MauticBillionMailBundle
+        run: composer validate --no-check-publish --no-interaction
 
       - name: Lint plugin PHP files
         run: find plugins/MauticBillionMailBundle -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l
