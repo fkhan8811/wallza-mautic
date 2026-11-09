@@ -41,6 +41,10 @@
 - [x] Add dedicated `billionmail+smtp` and `billionmail+smtps` DSN schemes through a plugin.
 - [x] Delegate to Symfony's native ESMTP transport to preserve Mautic's rendered message path.
 - [x] Add focused transport-factory PHPUnit test cases.
+- [x] Add the Mautic bundle DependencyInjection extension that loads `Config/services.php`, plus a container-registration test.
+- [x] Register the bundled plugin in root Composer `replace` and refresh `composer.lock` content hash.
+- [x] Dedicated push CI passed Composer metadata checks and PHP syntax lint on commit `b08fb63a7ad5d03922b7fda2c114353fe80c76ce`.
+- [ ] Complete Mautic PHPUnit matrix, root Composer lock validation and static-analysis checks; upstream jobs were still queued at the last status check.
 - [x] Register the bundled plugin in the root Composer `replace` map and add a focused PHP/Composer CI workflow.
 - [ ] Confirm the new CI workflow runs successfully; run PHPUnit and Mautic container/plugin discovery in a complete Mautic environment.
 - [ ] Execute tests, compile the Mautic container, enable/discover plugin and validate a test send against deployed BillionMail.
