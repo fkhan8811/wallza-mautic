@@ -52,7 +52,21 @@ The connected `fkhan8811/Whatsapp` backend uses the following tenant/auth model 
 
 This is a reference contract for the WallzaOS integration layer, not proof that Mautic already enforces tenant boundaries. The Mautic plugin currently does not establish Supabase SSO, map Mautic users to organizations, or filter Mautic entities by organization. Do not expose a shared Mautic instance to multiple customer workspaces until that enforcement is implemented and tested across UI, API, CLI, Messenger workers, imports/exports and webhook delivery. In particular, do not pass a browser-supplied `organization_id` into a Mautic request and treat it as authorization.
 
-## 4. Delivery event reconciliation
+## 4. Native Mautic IMAP feedback path
+
+Mautic 7.2.2 already has a monitored IMAP inbox processor:
+
+- `mautic:email:fetch` reads configured monitored mailboxes.
+- `ProcessBounceSubscriber` calls the native bounce processor for the `EmailBundle_bounces` folder. The processor attempts transport-specific handling when available, then parses standard Delivery Status Notifications and bounce message bodies.
+- For a matched contact, the native processor updates email-stat bounce details and adds an email Do-Not-Contact record using the bounced reason.
+- `ProcessUnsubscribeSubscriber` processes the `EmailBundle_unsubscribes` folder and marks matched contacts unsubscribed.
+- The feedback-loop processor also handles abuse FBL reports when routed to that monitored path.
+
+Use **Settings → Configuration → Email Settings → Monitored Inbox Settings** to configure the IMAP Default Mailbox and the Bounces folder; optionally configure Unsubscribe Requests and Contact Replies. The folder entries can share the default IMAP connection or use their own override settings. The configured IMAP host/port/TLS and mailbox credentials must come from the deployed BillionMail mailbox setup; do not assume they equal the SMTP submission settings.
+
+This gives Mautic a native IMAP-based way to ingest feedback messages that BillionMail delivers to those folders. It does **not** provide instant webhook reconciliation or prove that BillionMail automatically routes every delivered/deferred/bounce/complaint event into that mailbox. Delivery and provider-event synchronization must be verified against the live BillionMail deployment.
+
+## 5. Delivery event reconciliation
 
 No supported, documented provider webhook/signature contract was identified in the inspected BillionMail fork for mapping delivered, deferred, bounced, complained and rejected events back into Mautic. Do not invent an endpoint or accept unsigned public event callbacks.
 
@@ -67,7 +81,7 @@ WallzaOS should normalize delivery provider events into a stable internal event 
 
 Never trust a client-supplied tenant identifier as proof of tenant ownership.
 
-## 5. Suppression policy
+## 6. Suppression policy
 
 - Unsubscribe, hard bounce and complaint events must update a central suppression decision before future marketing sends.
 - Suppression is scoped by tenant and channel, with an explicit global block policy only where legally and operationally appropriate.
@@ -78,7 +92,7 @@ Never trust a client-supplied tenant identifier as proof of tenant ownership.
 
 This policy is a requirement, not a completed feature in the current branch.
 
-## 6. Required tests
+## 7. Required tests
 
 - Plugin discovery and service-container compilation.
 - SMTP authentication and TLS negotiation against the deployed BillionMail endpoint.
@@ -92,7 +106,7 @@ This policy is a requirement, not a completed feature in the current branch.
 - Tenant A events cannot mutate Tenant B recipient status.
 - Transient SMTP failure retry and permanent SMTP failure handling.
 
-## 7. Render deployment inspection
+## 8. Render deployment inspection
 
 The connected Render `My Workspace` was inspected. It currently contains the production Node service `Whatsapp` and the Node staging service `wallza-connect-staging`, both backed by the `fkhan8811/Whatsapp` repository. No Mautic service or Wallza Mautic database is present in that workspace. The only listed Render PostgreSQL database belongs to Seasons of Lawn and is suspended; it must not be reused for Mautic.
 
@@ -100,11 +114,11 @@ The production WhatsApp service is live, on its `main` branch, Singapore region 
 
 Mautic deployment must be validated on its actual target (the planned Oracle host or a separately provisioned service). The WhatsApp Node service and Supabase PostgreSQL are not substitutes for Mautic's MySQL/MariaDB application database.
 
-## 8. Deployment dependency
+## 9. Deployment dependency
 
 Mautic 7.2.2's database configuration uses MySQL/MariaDB. WallzaOS's Supabase PostgreSQL remains separate for SaaS control-plane data. Do not point Mautic's Doctrine database at Supabase PostgreSQL.
 
-## 9. Remaining inputs and blockers
+## 10. Remaining inputs and blockers
 
 - Actual deployed BillionMail SMTP mailbox/submission hostname, port, TLS mode and credentials (credentials must never be committed to Git or exposed to browsers).
 - A supported BillionMail provider delivery-event/webhook contract, including signature verification rules, if available in the deployed version.
