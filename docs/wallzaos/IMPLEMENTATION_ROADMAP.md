@@ -16,7 +16,7 @@
 | Baseline and feature audit | Complete as documentation | Runtime build and CI have not yet been run. |
 | BillionMail SMTP adapter | Implemented in source; unverified | Native Symfony ESMTP transport plugin and focused PHPUnit tests are committed. |
 | Delivery event reconciliation | Blocked | No supported provider webhook/signature contract has been identified in the inspected BillionMail fork. |
-| Tenant isolation | Blocked on product-app auth/tenant contract | The connected Lovable `WallzaOS` project is the website/admin CMS; its inspected DB has CMS/RBAC tables but no product workspace/tenant-membership or subscription-entitlement model. |
+| Tenant isolation | Auth contract identified; Mautic enforcement not implemented | `fkhan8811/Whatsapp` provides Supabase Auth + organizations + organization_members/agents + organization-scoped roles/permissions. Mautic SSO/user mapping/entity scoping remain required. |
 | Journey and campaign enhancements | Not started | Audit native capabilities first; avoid duplicating Mautic's existing engine. |
 | Segmentation and analytics enhancements | Not started | Need realistic data profiling before optimization. |
 | AI authoring and extra channels | Not started | Defer until identity, quotas, delivery and audit boundaries exist. |
