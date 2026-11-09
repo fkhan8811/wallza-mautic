@@ -1,6 +1,6 @@
 # WallzaOS BillionMail SMTP transport
 
-This plugin adds two explicit Symfony Mailer DSN schemes to Mautic:
+This plugin is packaged as a Mautic 7 plugin (`mautic/plugin-wallza-billionmail`) and adds two explicit Symfony Mailer DSN schemes:
 
 - `billionmail+smtp://` for SMTP submission with STARTTLS negotiation.
 - `billionmail+smtps://` for implicit TLS (normally port 465).
@@ -48,6 +48,10 @@ BillionMail's documented HTTP Send API is template-based: an API key is associat
 
 BillionMail's **SMTP Relay** settings configure how BillionMail itself forwards outbound messages to an external provider such as SES or Mailgun. They are not the SMTP host credentials Mautic should automatically copy. Use the mailbox/submission endpoint and credentials supplied by your actual deployment.
 
+## Install / discover
+
+The bundle is located under `plugins/MauticBillionMailBundle` and includes Composer package metadata. In a source-based Mautic deployment, deploy this plugin folder with the Mautic code, run the normal Composer/autoload and Mautic cache-clear/plugin-discovery procedure for your release, then confirm the bundle and `mailer.transport_factory` service are present in the compiled container. Do this in staging first; do not assume that placing files on disk alone activates the plugin.
+
 ## Verify
 
 1. Save the DSN in Mautic and use **Test Connection**.
@@ -59,6 +63,7 @@ BillionMail's **SMTP Relay** settings configure how BillionMail itself forwards 
 ## Scope and limitations
 
 - This is an SMTP transport adapter, not a BillionMail management API client.
+- This adapter deliberately uses Mautic's ordinary per-contact SMTP send path. It does not use Mautic's `TokenTransportInterface` for provider-side batch tokenization and does not add asynchronous provider callback handling.
 - BillionMail's public Send API does not currently provide a documented callback contract in the inspected fork for mapping provider delivery/bounce events back into Mautic. Provider-side delivery reconciliation is therefore not claimed as implemented here.
 - The plugin does not implement tenant isolation. WallzaOS tenant authorization must be enforced by the actual WallzaOS backend and/or separate Mautic deployment/database boundaries before exposing this service to multiple customer workspaces.
 - SMTP credentials must be stored only in Mautic's protected configuration/secret store and must never be sent to browsers or committed to Git.
