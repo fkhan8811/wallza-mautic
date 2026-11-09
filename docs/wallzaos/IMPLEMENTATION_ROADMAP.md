@@ -16,7 +16,7 @@
 | Baseline and feature audit | Complete as documentation | Runtime build and CI have not yet been run. |
 | BillionMail SMTP adapter | Implemented in source; unverified | Native Symfony ESMTP transport plugin and focused PHPUnit tests are committed. |
 | Delivery event reconciliation | Blocked | No supported provider webhook/signature contract has been identified in the inspected BillionMail fork. |
-| Tenant isolation | Blocked on WallzaOS auth contract | No populated WallzaOS application/backend repository is currently visible in the connected GitHub account. |
+| Tenant isolation | Blocked on product-app auth/tenant contract | The connected Lovable `WallzaOS` project is the website/admin CMS; its inspected DB has CMS/RBAC tables but no product workspace/tenant-membership or subscription-entitlement model. |
 | Journey and campaign enhancements | Not started | Audit native capabilities first; avoid duplicating Mautic's existing engine. |
 | Segmentation and analytics enhancements | Not started | Need realistic data profiling before optimization. |
 | AI authoring and extra channels | Not started | Defer until identity, quotas, delivery and audit boundaries exist. |
@@ -30,7 +30,7 @@
 - Preserve upstream test and build workflows.
 
 ### W1 — WallzaOS identity and tenant boundary
-- Inspect the real WallzaOS auth/tenant contract.
+- Inspect the real WallzaOS product-app auth/tenant contract. The connected Lovable `WallzaOS` project is the public website/admin CMS, not that product-app contract.
 - Inventory Mautic entities and data ownership.
 - Implement trusted tenant context and authorization for one vertical slice.
 - Propagate context to API, CLI, Messenger and webhook workers.
