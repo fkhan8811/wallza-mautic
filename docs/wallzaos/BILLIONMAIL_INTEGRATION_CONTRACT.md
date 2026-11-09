@@ -36,11 +36,23 @@ Optional controls supported by the adapter:
 - `local_domain` — explicit EHLO/HELO name.
 - `source_ip` — optional SMTP socket source IP.
 
-TLS is required by default and certificate verification remains enabled. The adapter delegates to Symfony's native ESMTP transport. It does not implement a BillionMail HTTP API client or claim delivery-event synchronization.
+TLS is required by default and certificate verification remains enabled. The adapter delegates to Symfony's native ESMTP transport. It uses Mautic's regular per-contact SMTP send path; it does not implement Mautic's optional `TokenTransportInterface` provider-side recipient batching or asynchronous provider callbacks. It does not implement a BillionMail HTTP API client or claim delivery-event synchronization.
 
 **Implementation status:** source files and focused PHPUnit tests have been committed. Tests have not yet been executed in a Mautic runtime or CI environment. Do not mark this feature production-verified until the plugin is discovered by Mautic, the service container compiles, SMTP authentication/TLS succeeds, and a controlled test email is delivered.
 
-## 3. Delivery event reconciliation
+## 3. WallzaOS backend identity contract discovered
+
+The connected `fkhan8811/Whatsapp` backend uses the following tenant/auth model as the current reference contract:
+
+- The authenticated identity is a Supabase Auth user. Server routes validate the bearer token with `supabase.auth.getUser(token)`; they do not accept a decoded client claim as proof of identity.
+- The organization is selected by an organization ID, but that ID is only a requested resource scope. Authorization is checked against `organization_members` (active membership where applicable) and/or `agents` rows matching both organization and authenticated user.
+- Privileged integration access is stricter: `authorizeMetaOrganization` resolves organization owner, `user_roles`, `organization_members`, and `agents`, then checks the `integrations.manage` permission through `permissions`, `role_permissions`, and `user_permissions_override`.
+- OAuth state in the backend uses an HMAC-signed payload plus a persisted one-time nonce and a short expiry. Meta webhooks are verified against the exact raw body using `X-Hub-Signature-256`.
+- The existing backend also has organization-scoped `email_mailboxes` and `email_credentials`; credential access must remain server-only.
+
+This is a reference contract for the WallzaOS integration layer, not proof that Mautic already enforces tenant boundaries. The Mautic plugin currently does not establish Supabase SSO, map Mautic users to organizations, or filter Mautic entities by organization. Do not expose a shared Mautic instance to multiple customer workspaces until that enforcement is implemented and tested across UI, API, CLI, Messenger workers, imports/exports and webhook delivery. In particular, do not pass a browser-supplied `organization_id` into a Mautic request and treat it as authorization.
+
+## 4. Delivery event reconciliation
 
 No supported, documented provider webhook/signature contract was identified in the inspected BillionMail fork for mapping delivered, deferred, bounced, complained and rejected events back into Mautic. Do not invent an endpoint or accept unsigned public event callbacks.
 
@@ -55,7 +67,7 @@ WallzaOS should normalize delivery provider events into a stable internal event 
 
 Never trust a client-supplied tenant identifier as proof of tenant ownership.
 
-## 4. Suppression policy
+## 5. Suppression policy
 
 - Unsubscribe, hard bounce and complaint events must update a central suppression decision before future marketing sends.
 - Suppression is scoped by tenant and channel, with an explicit global block policy only where legally and operationally appropriate.
@@ -66,7 +78,7 @@ Never trust a client-supplied tenant identifier as proof of tenant ownership.
 
 This policy is a requirement, not a completed feature in the current branch.
 
-## 5. Required tests
+## 6. Required tests
 
 - Plugin discovery and service-container compilation.
 - SMTP authentication and TLS negotiation against the deployed BillionMail endpoint.
@@ -80,15 +92,15 @@ This policy is a requirement, not a completed feature in the current branch.
 - Tenant A events cannot mutate Tenant B recipient status.
 - Transient SMTP failure retry and permanent SMTP failure handling.
 
-## 6. Deployment dependency
+## 7. Deployment dependency
 
 Mautic 7.2.2's database configuration uses MySQL/MariaDB. WallzaOS's Supabase PostgreSQL remains separate for SaaS control-plane data. Do not point Mautic's Doctrine database at Supabase PostgreSQL.
 
-## 7. Remaining inputs and blockers
+## 8. Remaining inputs and blockers
 
 - Actual deployed BillionMail SMTP mailbox/submission hostname, port, TLS mode and credentials (credentials must never be committed to Git or exposed to browsers).
 - A supported BillionMail provider delivery-event/webhook contract, including signature verification rules, if available in the deployed version.
-- The populated WallzaOS product-app/backend repository and its trusted auth/tenant claims. The connected Lovable project named `WallzaOS` is the public website/admin CMS (TanStack Start + Supabase) with CMS/RBAC tables, not the product-app tenant model. Its inspected schema contains no tenant/workspace memberships or subscription entitlements; `WallzaOS-Website` and `Wallza-2.0` GitHub repositories are empty, and `wallza-ops-hub` is a separate painting operations CRM.
+- Mautic-specific tenant enforcement and SSO/user mapping are still required. The `Whatsapp` backend provides the identity/organization contract above, but it is not yet wired to Mautic.
 - Sending-domain and per-tenant credential strategy.
 
 Until tenant identity and enforcement are implemented end-to-end, this Mautic instance must not be exposed as a shared multi-tenant SaaS service.
