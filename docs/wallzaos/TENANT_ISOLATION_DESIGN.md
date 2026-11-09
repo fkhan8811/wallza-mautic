@@ -2,7 +2,7 @@
 
 **Status:** Design baseline; implementation not yet certified  
 **Baseline:** Mautic 7.2.2  
-**Identity discovery:** The connected Lovable project named `WallzaOS` is the public website/admin CMS. The connected `fkhan8811/Whatsapp` repo is the actual product backend reference: Supabase Auth user identity; `organizations` as tenant; `organization_members` and `agents` membership; `user_roles`, `permissions`, `role_permissions` and `user_permissions_override` for role/permission checks. Its server-side `requireOrganizationAccess` validates a bearer token with `supabase.auth.getUser(token)` and checks membership in the requested organization. Its `authorizeMetaOrganization` adds the stricter `integrations.manage` permission check. Its role model (`admin`, `editor`, `marketing`, `viewer`) is not a product-tenant authorization contract.
+**Identity discovery:** The connected Lovable project named `WallzaOS` is the public website/admin CMS. The connected `fkhan8811/Whatsapp` repo is the actual product backend reference: Supabase Auth user identity; `organizations` as tenant; `organization_members` and `agents` membership; `user_roles`, `permissions`, `role_permissions` and `user_permissions_override` for role/permission checks. Its server-side `requireOrganizationAccess` validates a bearer token with `supabase.auth.getUser(token)` and checks membership in the requested organization. Its `authorizeMetaOrganization` adds the stricter `integrations.manage` permission check. The website CMS has a separate content-team RBAC model; it is not the product-app tenant model.
 
 ## 1. Security objective
 
