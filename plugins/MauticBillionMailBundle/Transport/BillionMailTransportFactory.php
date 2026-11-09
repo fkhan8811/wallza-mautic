@@ -39,7 +39,8 @@ final class BillionMailTransportFactory extends AbstractTransportFactory
         );
 
         $transport->setAutoTls($autoTls);
-        $transport->setRequireTls($dsn->getBooleanOption('require_tls'));
+        // Require encryption unless an administrator explicitly opts out in the DSN.
+        $transport->setRequireTls($dsn->getBooleanOption('require_tls', true));
 
         /** @var SocketStream $stream */
         $stream = $transport->getStream();
