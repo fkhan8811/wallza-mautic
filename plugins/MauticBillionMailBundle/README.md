@@ -52,6 +52,22 @@ BillionMail's **SMTP Relay** settings configure how BillionMail itself forwards 
 
 The bundle is located under `plugins/MauticBillionMailBundle` and includes Composer package metadata. In a source-based Mautic deployment, deploy this plugin folder with the Mautic code, run the normal Composer/autoload and Mautic cache-clear/plugin-discovery procedure for your release, then confirm the bundle and `mailer.transport_factory` service are present in the compiled container. Do this in staging first; do not assume that placing files on disk alone activates the plugin.
 
+## Mautic's native IMAP feedback processing
+
+SMTP delivery and mailbox feedback are separate connections. Mautic already includes an IMAP monitored-inbox subsystem, so a provider webhook is not required for ordinary bounce and unsubscribe mailbox processing when BillionMail exposes the relevant mailbox over IMAP.
+
+In **Settings → Configuration → Email Settings → Monitored Inbox Settings**:
+
+1. Configure the **Default Mailbox** with the IMAP host, IMAP port, TLS mode, username and password of the BillionMail mailbox that receives feedback messages. Use the real values shown by your deployment; do not assume the SMTP submission hostname and IMAP host are identical.
+2. Configure the **Bounces** folder to the IMAP folder that receives non-delivery reports for the Mautic sending identity. It can use the default mailbox connection or its own override settings.
+3. Optionally configure **Unsubscribe Requests** and **Contact Replies** folders if those message types are routed into dedicated folders.
+4. Set **Monitored address** to the address used for monitored feedback and return-path processing.
+5. Use **Test connection and fetch folders** to verify IMAP connectivity and folder visibility before scheduling the fetch command.
+
+Mautic's native `mautic:email:fetch` command reads the configured monitored mailboxes. The EmailBundle bounce subscriber invokes the native bounce parser and updates matched campaign statistics and email Do-Not-Contact records. The unsubscribe subscriber and feedback-loop processor also apply their native suppression handling. Schedule the command through your normal Mautic cron/worker operations after mailbox access and folder routing have been verified. Do not run it from the public WhatsApp API process.
+
+This is **IMAP inbox processing**, not a BillionMail webhook integration. It only works for feedback messages actually delivered into the configured mailbox/folder, and contact matching depends on Mautic's bounce addresses, headers and message/stat records. Test representative hard-bounce, soft-bounce, unsubscribe and complaint samples before enabling production campaigns.
+
 ## Verify
 
 1. Save the DSN in Mautic and use **Test Connection**.
@@ -63,6 +79,7 @@ The bundle is located under `plugins/MauticBillionMailBundle` and includes Compo
 ## Scope and limitations
 
 - This is an SMTP transport adapter, not a BillionMail management API client.
+- Mautic's native IMAP monitored-inbox flow can process bounce/unsubscribe/FBL messages placed in its configured folders; this plugin does not create BillionMail webhooks or guarantee BillionMail will route each provider event to those folders.
 - This adapter deliberately uses Mautic's ordinary per-contact SMTP send path. It does not use Mautic's `TokenTransportInterface` for provider-side batch tokenization and does not add asynchronous provider callback handling.
 - BillionMail's public Send API does not currently provide a documented callback contract in the inspected fork for mapping provider delivery/bounce events back into Mautic. Provider-side delivery reconciliation is therefore not claimed as implemented here.
 - The plugin does not implement tenant isolation. WallzaOS tenant authorization must be enforced by the actual WallzaOS backend and/or separate Mautic deployment/database boundaries before exposing this service to multiple customer workspaces.
