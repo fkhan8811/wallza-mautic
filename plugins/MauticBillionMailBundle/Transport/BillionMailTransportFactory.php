@@ -14,8 +14,10 @@ use Symfony\Component\Mailer\Transport\TransportInterface;
 /**
  * Maps the explicit BillionMail DSN schemes to Symfony's native ESMTP transport.
  *
- * This keeps Mautic's normal message rendering, batching, queueing, metadata,
- * and transport callbacks intact; BillionMail is only the SMTP delivery hop.
+ * This keeps Mautic's normal message rendering, campaign processing, and SMTP send
+ * path intact. Because this is a standard SMTP transport (not Mautic's optional
+ * TokenTransportInterface), Mautic uses its normal per-contact send path rather
+ * than provider-side recipient tokenization or asynchronous provider callbacks.
  */
 final class BillionMailTransportFactory extends AbstractTransportFactory
 {
