@@ -112,7 +112,7 @@ jobs:
       run: |
         php bin/console cache:clear --no-warmup --env=test
         php bin/console cache:warmup --no-interaction --env=test
-        php bin/console debug:container 'MauticPlugin\\MauticBillionMailBundle\\Transport\\BillionMailTransportFactory' --env=test
+        php bin/console debug:container 'MauticPlugin\MauticBillionMailBundle\Transport\BillionMailTransportFactory' --env=test
         php bin/console debug:container --tag=mailer.transport_factory --env=test | grep -F 'BillionMailTransportFactory'
 
     - name: Set correct ownership so Apache can access the files
