@@ -26,7 +26,7 @@ This is the isolation boundary for the initial SaaS rollout. A shared multi-tena
 - A separate BillionMail mailbox/submission credential set for each tenant.
 - The PHP IMAP extension is included in the official Mautic image; verify it is enabled before relying on monitored-email bounce processing.
 
-Mautic 7.2.2 supports PHP 8.2–8.5 and requires at least MySQL 8.4 or MariaDB 10.11. This stack uses the official dated Mautic 7.2.2 Apache image and MariaDB 11.4. See the Mautic release requirements before changing either pinned version.
+Mautic 7.2.2 supports PHP 8.2–8.5 and requires at least MySQL 8.4 or MariaDB 10.11. This stack uses the official dated Mautic 7.2.2 Apache image and MariaDB 11.4. See the Mautic release requirements before changing either pinned version. The Dockerfile pins the official multi-platform image manifest by digest (linux/amd64 and linux/arm64) so the same reviewed base image is used across supported Oracle architectures.
 
 ## Provision one tenant
 
