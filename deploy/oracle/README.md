@@ -42,7 +42,7 @@ Replace the example UUID with the actual immutable `organizations.id` UUID from 
 ~/.config/wallzaos-mautic/tenants/<tenant-slug>/.env
 ```
 
-The file and directory are created with restrictive permissions. The script refuses to overwrite an existing tenant env file and uses atomic lock directories to serialize provisioning by tenant slug and host port. If a host crashes during provisioning, inspect any leftover lock under `<tenants-dir>/.provisioning-locks/` and confirm no provisioner is active before removing that stale lock manually. Do not copy these secrets into Git, Lovable, browser code or logs.
+The file and directory are created with restrictive permissions. The script refuses to overwrite an existing tenant env file, reserves a host port for as long as that tenant env file exists (including while the stack is stopped), and uses atomic lock directories to serialize simultaneous provisioning by tenant slug and host port. To reuse a port, explicitly migrate the existing tenant's port in its private env file and reverse-proxy configuration first; do not delete its env file merely to bypass the reservation. If a host crashes during provisioning, inspect any leftover lock under `<tenants-dir>/.provisioning-locks/` and confirm no provisioner is active before removing that stale lock manually. Do not copy these secrets into Git, Lovable, browser code or logs.
 
 The web container binds to `127.0.0.1` only. It is not publicly reachable by default. Configure your host reverse proxy to route the tenant's HTTPS hostname to its assigned local port. Do not expose MariaDB or the web port directly to the public internet.
 
