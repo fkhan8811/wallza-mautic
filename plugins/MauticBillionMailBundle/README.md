@@ -25,7 +25,17 @@ Implicit TLS example:
 billionmail+smtps://MAILBOX_USER:URL_ENCODED_PASSWORD@mail.example.com:465?require_tls=true
 ```
 
-Replace the example host, port and credentials with the actual values shown by your BillionMail deployment. The examples are patterns, not default BillionMail ports or credentials. URL-encode reserved characters in the username or password.
+BillionMail's current fork configuration defines these default ports:
+
+| Service | Default port | Mautic use |
+|---|---:|---|
+| Postfix submission | 587 | Recommended; the supplied Postfix configuration enforces STARTTLS |
+| Postfix SMTPS | 465 | Alternative; implicit TLS |
+| Postfix SMTP | 25 | Server-to-server SMTP; do not use as the authenticated mailbox submission port |
+| Dovecot IMAPS | 993 | Recommended for Mautic monitored bounces/unsubscribes |
+| Dovecot IMAP | 143 | Plain IMAP listener; do not use over an untrusted network |
+
+Use the deployed `BILLIONMAIL_HOSTNAME` as the host and the password of a real mailbox. BillionMail mailbox usernames are full addresses (for example, `marketing@example.com`), so URL-encode the `@` as `%40` in the DSN. URL-encode reserved password characters too. These default ports are configurable in BillionMail's compose environment, so verify the deployed values before use.
 
 Optional throughput controls:
 
