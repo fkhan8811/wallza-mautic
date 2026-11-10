@@ -19,58 +19,58 @@ final class MauticWallzaIdentityExtensionTest extends TestCase
 
         (new MauticWallzaIdentityExtension())->load([], $container);
 
-        self::assertTrue($container->hasDefinition(WallzaIntegration::class));
-        self::assertTrue($container->hasDefinition(WallzaSsoSubscriber::class));
-        self::assertTrue($container->hasDefinition(WallzaSsoAssertionVerifier::class));
-        self::assertTrue($container->hasAlias('mautic.integration.wallza'));
-        self::assertSame(
+        $this->assertTrue($container->hasDefinition(WallzaIntegration::class));
+        $this->assertTrue($container->hasDefinition(WallzaSsoSubscriber::class));
+        $this->assertTrue($container->hasDefinition(WallzaSsoAssertionVerifier::class));
+        $this->assertTrue($container->hasAlias('mautic.integration.wallza'));
+        $this->assertSame(
             WallzaIntegration::class,
             (string) $container->getAlias('mautic.integration.wallza')
         );
 
-        self::assertSame('', $container->getParameter('wallza_sso_authorize_url'));
-        self::assertSame('', $container->getParameter('wallza_sso_token_url'));
-        self::assertSame('', $container->getParameter('wallza_sso_tenant_id'));
-        self::assertSame('', $container->getParameter('wallza_sso_hmac_secret'));
-        self::assertSame('', $container->getParameter('wallza_sso_base_url'));
-        self::assertSame('https://api.wallza.in', $container->getParameter('wallza_sso_issuer'));
+        $this->assertSame('', $container->getParameter('wallza_sso_authorize_url'));
+        $this->assertSame('', $container->getParameter('wallza_sso_token_url'));
+        $this->assertSame('', $container->getParameter('wallza_sso_tenant_id'));
+        $this->assertSame('', $container->getParameter('wallza_sso_hmac_secret'));
+        $this->assertSame('', $container->getParameter('wallza_sso_base_url'));
+        $this->assertSame('https://api.wallza.in', $container->getParameter('wallza_sso_issuer'));
 
         $subscriber = $container->getDefinition(WallzaSsoSubscriber::class);
-        self::assertSame(
+        $this->assertSame(
             '%env(default:wallza_sso_authorize_url:WALLZA_SSO_AUTHORIZE_URL)%',
             $subscriber->getArgument('$authorizeUrl')
         );
-        self::assertSame(
+        $this->assertSame(
             '%env(default:wallza_sso_token_url:WALLZA_SSO_TOKEN_URL)%',
             $subscriber->getArgument('$tokenUrl')
         );
-        self::assertSame(
+        $this->assertSame(
             '%env(default:wallza_sso_tenant_id:WALLZA_MAUTIC_TENANT_ID)%',
             $subscriber->getArgument('$tenantId')
         );
-        self::assertSame(
+        $this->assertSame(
             '%env(default:wallza_sso_base_url:WALLZA_MAUTIC_BASE_URL)%',
             $subscriber->getArgument('$baseUrl')
         );
-        self::assertSame(
+        $this->assertSame(
             '%env(default:wallza_sso_issuer:WALLZA_SSO_ISSUER)%',
             $subscriber->getArgument('$issuer')
         );
-        self::assertSame(
+        $this->assertSame(
             '%env(default:wallza_sso_hmac_secret:WALLZA_SSO_HMAC_SECRET)%',
             $subscriber->getArgument('$hmacSecret')
         );
 
         $verifier = $container->getDefinition(WallzaSsoAssertionVerifier::class);
-        self::assertSame(
+        $this->assertSame(
             '%env(default:wallza_sso_hmac_secret:WALLZA_SSO_HMAC_SECRET)%',
             $verifier->getArgument('$secret')
         );
-        self::assertSame(
+        $this->assertSame(
             '%env(default:wallza_sso_issuer:WALLZA_SSO_ISSUER)%',
             $verifier->getArgument('$issuer')
         );
-        self::assertSame(
+        $this->assertSame(
             '%env(default:wallza_sso_tenant_id:WALLZA_MAUTIC_TENANT_ID)%',
             $verifier->getArgument('$tenantId')
         );
@@ -80,8 +80,8 @@ final class MauticWallzaIdentityExtensionTest extends TestCase
     {
         $integration = (new \ReflectionClass(WallzaIntegration::class))->newInstanceWithoutConstructor();
 
-        self::assertSame('Wallza', $integration->getName());
-        self::assertSame('none', $integration->getAuthenticationType());
-        self::assertContains('sso_service', $integration->getSupportedFeatures());
+        $this->assertSame('Wallza', $integration->getName());
+        $this->assertSame('none', $integration->getAuthenticationType());
+        $this->assertContains('sso_service', $integration->getSupportedFeatures());
     }
 }
