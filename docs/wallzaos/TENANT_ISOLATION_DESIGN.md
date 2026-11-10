@@ -43,7 +43,7 @@ The existing WhatsApp backend establishes the following source-of-truth contract
 
 The existing backend's database migrations include older broad `auth.uid() IS NOT NULL` policies as well as later org-scoped RLS migrations. Do not assume every table is tenant-safe merely because RLS is enabled. Mautic integration must independently enforce authorization on every request and worker path.
 
-Mautic has not yet been connected to this identity contract: no Supabase SSO, Mautic-user mapping, tenant-context resolver or organization-scoped Mautic entity filter has been implemented in this branch.
+The Mautic-side Wallza SSO client is now implemented. It verifies a tenant-bound short-lived assertion issued after WallzaOS has authenticated Supabase identity and active membership. It maps `sub` (the immutable Supabase Auth UUID) to the tenant-local Mautic `username`, then requires the signed verified email to match the local user and the account to be enabled. It does not create users or assign local roles. The WallzaOS authorization-code/token endpoints, protected tenant registry and API-based user provisioning are not yet implemented. The initial one-stack-per-organization architecture supplies the tenant data boundary; no shared-database entity filter is planned for that rollout.
 
 ## 5. Enforcement points
 
@@ -90,11 +90,13 @@ For tenant-owned records, define the tenant key, uniqueness scope, indexes, fore
 1. Map current WallzaOS authentication, tenant and user model.
 2. Keep customer data separated using one Mautic stack/database per organization for the initial rollout.
 3. Implement a protected server-side tenant registry mapping authenticated organizations to Mautic URLs and API credentials.
-4. Implement membership-aware SSO/user provisioning and subscription/quota checks.
-5. Propagate the authorized tenant mapping through WallzaOS jobs, retries and webhook workflows.
-6. Add negative tests proving one organization cannot resolve or call another organization's Mautic stack.
-7. Capacity-test each stack on the actual Oracle host before expanding the number of tenants.
-8. Revisit shared-database tenant enforcement only as a separate architecture project; a Doctrine filter alone is insufficient.
+4. Implement the matching WallzaOS authorization-code/token endpoints; require active membership both when issuing and consuming a one-time code.
+5. Provision tenant-local Mautic users with `username` equal to the immutable Supabase UUID (`sub`), and the same verified email; keep local Mautic roles under tenant-admin control.
+6. Implement subscription/quota checks and automated tenant lifecycle.
+7. Propagate the authorized tenant mapping through WallzaOS jobs, retries and webhook workflows.
+8. Add negative tests proving one organization cannot resolve or call another organization's Mautic stack.
+9. Capacity-test each stack on the actual Oracle host before expanding the number of tenants.
+10. Revisit shared-database tenant enforcement only as a separate architecture project; a Doctrine filter alone is insufficient.
 
 ## 9. Release gate
 
