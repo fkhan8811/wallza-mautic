@@ -148,3 +148,20 @@ Mautic 7.2.2's database configuration uses MySQL/MariaDB. WallzaOS's Supabase Po
 - Sending-domain and per-tenant credential strategy.
 
 Until tenant identity and enforcement are implemented end-to-end, this Mautic instance must not be exposed as a shared multi-tenant SaaS service.
+
+
+## 12. Mautic-side Wallza SSO client contract
+
+The Mautic-side client is implemented in `plugins/MauticWallzaIdentityBundle` through Mautic's native `sso_service` integration hook. The full request/claim contract and installation steps are in that plugin's README.
+
+1. Mautic starts login with a cryptographically random session-bound `state` and redirects to the tenant's configured HTTPS WallzaOS authorization endpoint with the fixed tenant UUID and Mautic callback URL.
+2. WallzaOS authenticates the browser session with Supabase Auth server-side (`getUser(token)`) and requires active membership in the selected organization (or permitted `agents` membership). It resolves the tenant and callback URI from a protected registry; query parameters are selectors only.
+3. WallzaOS issues a random, single-use authorization code bound to the Supabase subject, tenant UUID, client ID, exact callback URI and state. It must expire within 60 seconds and be consumed atomically.
+4. Mautic exchanges the code over HTTPS using Basic auth `tenant_uuid:per_tenant_hmac_secret`, with redirects disabled. WallzaOS rechecks membership at exchange.
+5. WallzaOS returns an HS256 JWT assertion signed with that tenant's 64-hex-character secret. Required claims are `iss`, `aud`, `tenant_id`, `sub` (immutable Supabase user UUID), `email`, `email_verified=true`, `first_name`, `last_name`, `iat`, `exp` (maximum 120-second lifetime), `jti` and original `state`.
+6. Mautic verifies the signature, issuer, audience, tenant, state, time window and verified email. It resolves the local Mautic user by the exact Supabase UUID in `username`, then requires the signed verified email to match the local Mautic email and the local account to be enabled.
+7. The Mautic plugin does not create users, enable accounts, or assign roles from token claims. WallzaOS must provision the tenant-local Mautic user through that tenant's protected API before SSO; the tenant admin owns the Mautic role.
+
+The Oracle provisioner generates a separate 256-bit secret for each tenant in the private `0600` env file. The matching secret must be stored in WallzaOS's protected tenant registry. It is passed only to that tenant's `mautic_web` container, not to cron or worker containers.
+
+**Not yet end-to-end:** the Mautic client and its unit tests are present, but the matching WallzaOS authorization-code/token endpoints, protected tenant registry, automated user provisioning and actual Supabase-to-Mautic browser test are outside this repository and remain to be implemented. Keep Wallza SSO disabled until both sides are connected and verified.
