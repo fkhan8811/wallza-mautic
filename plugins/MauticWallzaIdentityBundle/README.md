@@ -94,7 +94,7 @@ Successful response:
 
 ### 4. Signed assertion
 
-The assertion is a compact JWT signed with HS256 using that tenant's 64-character hexadecimal secret. The protected header must be `{"alg":"HS256","typ":"JWT"}`. Required claims:
+The assertion is a compact JWT signed with HS256 using that tenant's 64-character hexadecimal secret. **Use the ASCII/UTF-8 bytes of the 64-character hex string itself as the HMAC key; do not hex-decode it to 32 raw bytes.** The token exchange also uses the same 64-character text as the HTTP Basic password. This encoding is important: both the Mautic plugin and WallzaOS must use identical key bytes. The protected header must be `{"alg":"HS256","typ":"JWT"}`. Required claims:
 
 | Claim | Requirement |
 |---|---|
