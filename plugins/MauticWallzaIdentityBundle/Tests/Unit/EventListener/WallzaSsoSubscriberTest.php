@@ -75,14 +75,15 @@ final class WallzaSsoSubscriberTest extends TestCase
 
         $user = $this->getMockBuilder(User::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['isPublished'])
+            ->onlyMethods(['isPublished', 'getEmail'])
             ->getMock();
         $user->method('isPublished')->willReturn(true);
+        $user->method('getEmail')->willReturn('faisal@example.test');
 
         $userRepository = $this->createMock(UserRepository::class);
         $userRepository->expects(self::once())
             ->method('findOneBy')
-            ->with(['email' => 'faisal@example.test'])
+            ->with(['username' => '6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba'])
             ->willReturn($user);
 
         $assertion = $this->createAssertion($state);
@@ -169,14 +170,15 @@ final class WallzaSsoSubscriberTest extends TestCase
 
         $user = $this->getMockBuilder(User::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['isPublished'])
+            ->onlyMethods(['isPublished', 'getEmail'])
             ->getMock();
         $user->method('isPublished')->willReturn(false);
+        $user->method('getEmail')->willReturn('faisal@example.test');
 
         $userRepository = $this->createMock(UserRepository::class);
         $userRepository->expects(self::once())
             ->method('findOneBy')
-            ->with(['email' => 'faisal@example.test'])
+            ->with(['username' => '6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba'])
             ->willReturn($user);
 
         $assertion = $this->createAssertion($state);
@@ -258,7 +260,7 @@ final class WallzaSsoSubscriberTest extends TestCase
             'iss' => self::ISSUER,
             'aud' => self::TENANT,
             'tenant_id' => self::TENANT,
-            'sub' => 'supabase-user-123',
+            'sub' => '6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba',
             'email' => 'faisal@example.test',
             'email_verified' => true,
             'first_name' => 'Faisal',
