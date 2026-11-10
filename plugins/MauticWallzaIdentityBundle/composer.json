@@ -1,0 +1,20 @@
+{
+    "name": "mautic/plugin-wallza-identity",
+    "description": "WallzaOS signed SSO integration for isolated Mautic tenants",
+    "type": "mautic-plugin",
+    "keywords": [
+        "mautic",
+        "wallzaos",
+        "sso",
+        "supabase",
+        "identity"
+    ],
+    "extra": {
+        "install-directory-name": "MauticWallzaIdentityBundle"
+    },
+    "minimum-stability": "dev",
+    "require": {
+        "mautic/core-lib": "^7.0"
+    },
+    "license": "GPL-3.0-only"
+}
