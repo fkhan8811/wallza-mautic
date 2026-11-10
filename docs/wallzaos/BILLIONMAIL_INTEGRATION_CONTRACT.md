@@ -82,7 +82,7 @@ Mautic 7.2.2 already has a monitored IMAP inbox processor:
 - `ProcessBounceSubscriber` calls the native bounce processor for the `EmailBundle_bounces` folder. The processor attempts transport-specific handling when available, then parses standard Delivery Status Notifications and bounce message bodies.
 - For a matched contact, the native processor updates email-stat bounce details and adds an email Do-Not-Contact record using the bounced reason.
 - `ProcessUnsubscribeSubscriber` processes the `EmailBundle_unsubscribes` folder and marks matched contacts unsubscribed.
-- The feedback-loop processor also handles abuse FBL reports when routed to that monitored path.
+- The feedback-loop processor also handles abuse FBL reports when routed to the same `EmailBundle_unsubscribes` monitored folder (the configured Unsubscribe Requests folder); Mautic has no separate feedback-loop folder in this flow.
 
 Use **Settings → Configuration → Email Settings → Monitored Inbox Settings** to configure the IMAP Default Mailbox and the Bounces folder; optionally configure Unsubscribe Requests and Contact Replies. The folder entries can share the default IMAP connection or use their own override settings. The configured IMAP host/port/TLS and mailbox credentials must come from the deployed BillionMail mailbox setup; do not assume they equal the SMTP submission settings.
 
