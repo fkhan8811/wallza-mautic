@@ -1,6 +1,6 @@
 # WallzaOS Mautic — BillionMail Integration Contract
 
-**Status:** A native SMTP transport adapter has been committed to the Mautic feature branch. Runtime integration, delivery-event reconciliation, suppression synchronization and tenant isolation are not yet verified or complete.
+**Status:** The BillionMail SMTP adapter, Mailpit-backed test, Mautic plugin registration and per-tenant deployment template are implemented in the feature branch. The Mautic-side Wallza SSO client is implemented, but its WallzaOS auth-code/token endpoints are still outstanding. Live BillionMail SMTP/IMAP integration, provider event reconciliation, end-to-end SSO and Oracle capacity remain unverified.
 
 ## 1. Architecture decision
 
@@ -50,7 +50,7 @@ The connected `fkhan8811/Whatsapp` backend uses the following tenant/auth model 
 - OAuth state in the backend uses an HMAC-signed payload plus a persisted one-time nonce and a short expiry. Meta webhooks are verified against the exact raw body using `X-Hub-Signature-256`.
 - The live `Wallza-Connect` Supabase schema contains organization-scoped `email_mailboxes` and `email_credentials`; the SMTP/IMAP credential columns are encrypted, and the credential table is RLS-scoped through its parent mailbox's organization. Decryption and SMTP use must stay on a trusted server.
 
-This is a reference contract for the WallzaOS integration layer, not proof that Mautic already enforces tenant boundaries. The Mautic plugin currently does not establish Supabase SSO, map Mautic users to organizations, or filter Mautic entities by organization. Do not expose a shared Mautic instance to multiple customer workspaces until that enforcement is implemented and tested across UI, API, CLI, Messenger workers, imports/exports and webhook delivery. In particular, do not pass a browser-supplied `organization_id` into a Mautic request and treat it as authorization.
+This is a reference contract for the WallzaOS integration layer, not proof that the full SaaS control plane is complete. The Mautic-side SSO plugin now verifies a short-lived assertion from WallzaOS and maps the immutable Supabase user UUID to a tenant-local Mautic username; it does not accept a browser-supplied organization ID or decode a browser-supplied Supabase JWT. The WallzaOS authorization-code/token endpoints, protected tenant registry, membership checks at code issuance/exchange and tenant-local user provisioning are still outstanding. The initial deployment uses a separate Mautic database/runtime per organization; do not expose one shared Mautic instance/database to multiple customer workspaces.
 
 ## 4. BillionMail SMTP and IMAP defaults verified in source
 
