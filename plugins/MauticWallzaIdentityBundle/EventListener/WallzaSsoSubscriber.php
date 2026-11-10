@@ -12,6 +12,8 @@ use MauticPlugin\MauticWallzaIdentityBundle\Security\WallzaSsoAssertionVerifier;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
@@ -201,7 +203,19 @@ final readonly class WallzaSsoSubscriber implements EventSubscriberInterface
 
     private function fail(AuthenticationEvent $event): void
     {
-        $event->setFailedAuthenticationMessage('Wallza SSO authentication failed. Please sign in again.');
+        $message = 'Wallza SSO authentication failed. Please sign in again.';
+        $event->setFailedAuthenticationMessage($message);
         $event->setIsFailedAuthentication();
+
+        // PluginAuthenticator otherwise turns a failed SSO callback without a
+        // response into an empty JSON response. Persist a generic error and
+        // return the browser to Mautic's login page instead of showing a blank page.
+        if ($event->isLoginCheck()) {
+            $event->getRequest()->getSession()->set(
+                SecurityRequestAttributes::AUTHENTICATION_ERROR,
+                new AuthenticationException($message)
+            );
+            $event->setResponse(new RedirectResponse($this->router->generate('login')));
+        }
     }
 }
