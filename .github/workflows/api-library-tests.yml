@@ -111,13 +111,24 @@ jobs:
         mysql -uroot -P${{ job.services.mysql.ports[3306] }} -h127.0.0.1 -e "USE mautictest; INSERT INTO plugin_integration_settings (plugin_id, name, is_published, supported_features, api_keys, feature_settings) VALUES (NULL, 'Twilio', 1, 'a:0:{}', 'a:2:{s:8:\"username\";s:169:\"bzFmNlIydWRSZXlIN2lQVkdpanJ4aTQ2NUh6RVdDbHlLRVhsWGZ4b0kyZVNxLzYrQ1J6V1RvMnlhVEp0c245TEp6eStQekx5ZVhLWjB1YVdoR3RnR2dHQ3k1emVVdGt5NzZKUmtjUnJ3c1E9|L8tbZRIYhwatT7Mq+HAdYA==\";s:8:\"password\";s:169:\"T2d2cFpXQWE5YVZnNFFianJSYURRYUtGRHBNZGZjM1VETXg2Wm5Va3NheW43MjVWUlJhTVlCL2pYMDBpbElONStiVVBNbEM3M3BaeGJMNkFKNUFEN1pTNldSRjc4bUM4SDh1SE9OY1k5MTg9|TeuSvfx4XSUOvp0O7T49Cg==\";}', 'a:4:{s:20:\"sending_phone_number\";N;s:22:\"disable_trackable_urls\";i:0;s:16:\"frequency_number\";N;s:14:\"frequency_time\";N;}');"
         php bin/console mautic:plugins:reload --env=test
 
-    - name: Compile Mautic container and verify BillionMail transport registration
+    - name: Compile Mautic container and verify Wallza plugins and SSO service
       working-directory: /var/www/html
+      env:
+        WALLZA_MAUTIC_TENANT_ID: "00000000-0000-4000-8000-000000000001"
+        WALLZA_MAUTIC_BASE_URL: "https://mautic.example.test"
+        WALLZA_SSO_AUTHORIZE_URL: "https://auth.example.test/mautic/authorize"
+        WALLZA_SSO_TOKEN_URL: "https://auth.example.test/mautic/token"
+        WALLZA_SSO_ISSUER: "https://auth.example.test"
+        WALLZA_SSO_HMAC_SECRET: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
       run: |
         php bin/console cache:clear --no-warmup --env=test
         php bin/console cache:warmup --no-interaction --env=test
-        php bin/console debug:container 'MauticPlugin\MauticBillionMailBundle\Transport\BillionMailTransportFactory' --env=test
+        php bin/console debug:container 'MauticPlugin\\MauticBillionMailBundle\\Transport\\BillionMailTransportFactory' --env=test
         php bin/console debug:container --tag=mailer.transport_factory --env=test | grep -F 'BillionMailTransportFactory'
+        php bin/console debug:container 'MauticPlugin\\MauticWallzaIdentityBundle\\Integration\\WallzaIntegration' --env=test
+        php bin/console debug:container 'mautic.integration.wallza' --env=test
+        php bin/console debug:container 'MauticPlugin\\MauticWallzaIdentityBundle\\EventListener\\WallzaSsoSubscriber' --env=test
+        php bin/console debug:container --tag=kernel.event_subscriber --env=test | grep -F 'WallzaSsoSubscriber'
 
     - name: Set correct ownership so Apache can access the files
       run: sudo chown -R www-data:www-data /var/www/html
