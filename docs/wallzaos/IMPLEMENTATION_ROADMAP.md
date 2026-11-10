@@ -16,8 +16,8 @@
 | Baseline and feature audit | Documented; upstream baseline retained | Mautic 7.2.2 remains the base. Earlier CI passed PHP 8.5 MySQL/MariaDB PHPUnit jobs, Mautic E2E, PHPStan, Twig lint, Composer lock validation and API-library compatibility; the overall run was incomplete/failed at workflow level, so the latest full matrix is being repeated. |
 | BillionMail SMTP adapter | Implementation and test automation committed; latest execution pending | Symfony ESMTP factory, Mautic bundle extension, Composer package registration and lock hash are committed. CI now exercises DSN/unit tests, a real SMTP send into Mailpit, pinned Oracle image build/autoload/IMAP checks and a full Mautic plugin reload/container compile in the API-library job. No live BillionMail credentials or production send have been tested. |
 | Feedback processing | Native IMAP path documented; live routing unverified | Mautic's native `mautic:email:fetch` handles bounce/unsubscribe/FBL mailbox messages. No supported signed BillionMail delivery-webhook contract has been confirmed. |
-| Tenant data isolation | Per-tenant deployment template implemented; control-plane mapping pending | Oracle template creates a separate Mautic database, volumes, network and runtime per tenant. It is not deployed or capacity-tested. WallzaOS backend-to-tenant registry, provisioning lifecycle, SSO and API credential management remain unimplemented. |
-| Oracle deployment | Template committed; CI validation pending | Pinned Mautic 7.2.2 image, MariaDB 11.4, web/cron/worker services, local-only web port, resource caps, three-consumer pilot worker pool and guarded provisioner are present. CI builds the image, validates Compose, runs provisioner smoke tests and checks plugin autoload/IMAP. No Oracle deployment or capacity test has been performed. |
+| Tenant data isolation | Data-plane and Mautic SSO client implemented; WallzaOS control plane pending | Oracle template creates a separate Mautic DB, volumes, network and runtime per tenant. Mautic-side SSO verifies tenant-bound assertions and only logs in existing enabled users. WallzaOS code/token endpoints, protected tenant registry, user provisioning lifecycle and API credential management are still outstanding. Oracle deployment/capacity tests remain pending. |
+| Oracle deployment | Template committed; CI validation pending | Pinned Mautic 7.2.2 image contains both custom plugins; MariaDB 11.4, web/cron/worker services, local-only web port, resource caps, three-consumer pilot pool and guarded provisioner are present. CI builds the image, validates Compose, runs provisioner smoke tests and checks both plugins' autoload/IMAP. No Oracle deployment or capacity test has been performed. |
 | Journey and campaign enhancements | Not started | Audit native capabilities first; avoid duplicating Mautic's existing engine. |
 | Segmentation and analytics enhancements | Not started | Need realistic data profiling before optimization. |
 | AI authoring and extra channels | Not started | Defer until identity, quotas, delivery and audit boundaries exist. |
@@ -33,7 +33,10 @@
 - Use the inspected `fkhan8811/Whatsapp` product backend contract and live `Wallza-Connect` Supabase schema: Supabase `getUser(token)`, then organization membership (`organization_members` / `agents`), then `integrations.manage` for privileged integration operations. The connected Lovable `WallzaOS` project is the public website/admin CMS.
 - **Initial data-plane isolation choice:** one Mautic stack and one MariaDB database per WallzaOS organization. The Oracle deployment template and manual tenant provisioner are committed. Do not put multiple organizations in one Mautic database.
 - The WallzaOS backend still needs a protected tenant registry mapping an authorized organization to its Mautic URL and server-side API credential. Never accept the target URL or token from the browser.
-- Implement Supabase SSO/user mapping, subscription/quota checks, automated tenant provisioning/suspension/deletion, and secure API credential rotation.
+- [x] Implement the Mautic-side Wallza SSO client with session-bound state, server-to-server code exchange, signed tenant assertion verification, and existing-user-only login.
+- [ ] Implement the matching WallzaOS auth-code/token endpoints and protected tenant registry; require active membership at issuance and exchange.
+- [ ] Provision Mautic users through tenant-scoped API credentials; preserve tenant-local Mautic roles.
+- [ ] Implement subscription/quota checks, automated tenant provisioning/suspension/deletion, and secure API credential rotation.
 - Propagate the organization mapping through queued work, retries, webhooks and support operations.
 - Add negative tests for tenant-to-stack routing, guessed organization IDs, revoked memberships and token/URL tampering.
 - Do not treat Mautic user ownership permissions as tenant isolation.
@@ -46,12 +49,13 @@
 - [x] Document Mautic's native IMAP monitored-inbox flow for bounces, unsubscribe requests and feedback-loop messages, including the correct Unsubscribe Requests folder for abuse FBL reports.
 - [x] Add a Mailpit-backed SMTP integration test that sends a real Symfony message through the BillionMail transport and verifies it appears in the SMTP sink.
 - [x] Extend dedicated CI to build the pinned Oracle image, verify plugin autoload and PHP IMAP, exercise provisioner safety, and validate Compose/cron configuration.
-- [x] Extend API-library CI to reload the local Mautic plugins, rebuild the cache/container and verify the BillionMail transport factory registration.
+- [x] Extend API-library CI to reload the local Mautic plugins, rebuild the cache/container and verify the BillionMail transport factory and Wallza SSO integration/subscriber registration.
 - [x] Serialize tenant provisioning by slug and host port with atomic locks; smoke tests cover busy tenant/port locks, secret overwrite, orphan Compose resources and invalid ports.
-- [ ] Obtain successful CI results for the new SMTP sink, container-discovery and Oracle smoke checks.
+- [ ] Obtain successful CI results for the SMTP sink, Wallza Identity assertion/callback tests, plugin/container discovery and Oracle provisioner smoke checks.
 - [ ] Pass the Mailpit-backed plugin PHPUnit/integration run and complete the current full Mautic CI matrix.
-- [ ] Pass the automated real-Mautic plugin reload/container compile check and the pinned Oracle image autoload check.
+- [ ] Pass the automated real-Mautic plugin reload/container compile check for both plugins and the pinned Oracle image autoload check.
 - [ ] Send a controlled test message through the real BillionMail mailbox using its actual SMTP hostname, port, credentials and TLS certificate.
+- [ ] Implement and run the matching WallzaOS SSO endpoints; complete browser-to-Mautic SSO with an actual Supabase session and a tenant-local provisioned user.
 - [ ] Verify BillionMail routes hard/soft bounce, unsubscribe and complaint/feedback messages into the configured IMAP folders; assert Mautic updates stats and Do-Not-Contact state.
 - [ ] Add provider webhook reconciliation only if a documented signed event contract is confirmed; never invent endpoints or accept unsigned callbacks.
 ### W3 — Campaign/journey improvements
