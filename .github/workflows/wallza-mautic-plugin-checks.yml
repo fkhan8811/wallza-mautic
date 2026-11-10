@@ -78,9 +78,9 @@ jobs:
           docker run --rm --entrypoint php wallzaos/mautic:ci -r '
             require "/var/www/html/vendor/autoload.php";
             $classes = [
-              "MauticPlugin\\\\MauticBillionMailBundle\\\\MauticBillionMailBundle",
-              "MauticPlugin\\\\MauticBillionMailBundle\\\\DependencyInjection\\\\MauticBillionMailExtension",
-              "MauticPlugin\\\\MauticBillionMailBundle\\\\Transport\\\\BillionMailTransportFactory",
+              "MauticPlugin\\MauticBillionMailBundle\\MauticBillionMailBundle",
+              "MauticPlugin\\MauticBillionMailBundle\\DependencyInjection\\MauticBillionMailExtension",
+              "MauticPlugin\\MauticBillionMailBundle\\Transport\\BillionMailTransportFactory",
             ];
             foreach ($classes as $class) {
               if (!class_exists($class)) {
