@@ -70,7 +70,7 @@ In **Settings → Configuration → Email Settings → Monitored Inbox Settings*
 
 1. Configure the **Default Mailbox** with the IMAP host, IMAP port, TLS mode, username and password of the BillionMail mailbox that receives feedback messages. Use the real values shown by your deployment; do not assume the SMTP submission hostname and IMAP host are identical.
 2. Configure the **Bounces** folder to the IMAP folder that receives non-delivery reports for the Mautic sending identity. It can use the default mailbox connection or its own override settings.
-3. Optionally configure **Unsubscribe Requests** and **Contact Replies** folders if those message types are routed into dedicated folders.
+3. Optionally configure **Unsubscribe Requests** and **Contact Replies** folders if those message types are routed into dedicated folders. Route abuse/feedback-loop complaint reports into the **Unsubscribe Requests** folder as well: Mautic's native unsubscribe subscriber runs both the unsubscribe parser and the abuse feedback-loop parser for that monitored folder.
 4. Set **Monitored address** to the address used for monitored feedback and return-path processing.
 5. Use **Test connection and fetch folders** to verify IMAP connectivity and folder visibility before scheduling the fetch command.
 
