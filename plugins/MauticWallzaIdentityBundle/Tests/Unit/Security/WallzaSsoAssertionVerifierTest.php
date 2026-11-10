@@ -39,7 +39,7 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
     {
         $assertion = $this->createAssertion(['tenant_id' => '2a7b6df3-b79c-4d87-94d1-76d2eb0db160']);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('issuer, audience, tenant or state');
         $this->verifier()->verify($assertion, self::STATE, self::NOW);
     }
@@ -48,7 +48,7 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
     {
         $assertion = $this->createAssertion(['aud' => 'another-tenant']);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('issuer, audience, tenant or state');
         $this->verifier()->verify($assertion, self::STATE, self::NOW);
     }
@@ -57,7 +57,7 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
     {
         $assertion = $this->createAssertion(['state' => 'different-state']);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('issuer, audience, tenant or state');
         $this->verifier()->verify($assertion, self::STATE, self::NOW);
     }
@@ -69,7 +69,7 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
             'exp' => self::NOW - 60,
         ]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('expired');
         $this->verifier()->verify($assertion, self::STATE, self::NOW);
     }
@@ -81,7 +81,7 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
             'exp' => self::NOW + 121,
         ]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('time window');
         $this->verifier()->verify($assertion, self::STATE, self::NOW);
     }
@@ -90,7 +90,7 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
     {
         $assertion = $this->createAssertion(['email_verified' => false]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('verified user identity');
         $this->verifier()->verify($assertion, self::STATE, self::NOW);
     }
@@ -99,7 +99,7 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
     {
         $assertion = $this->createAssertion(['sub' => 'not-a-supabase-uuid']);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('verified user identity');
         $this->verifier()->verify($assertion, self::STATE, self::NOW);
     }
@@ -108,7 +108,7 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
     {
         $assertion = $this->createAssertion([], null, ['alg' => 'none']);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('unsupported signing algorithm');
         $this->verifier()->verify($assertion, self::STATE, self::NOW);
     }
