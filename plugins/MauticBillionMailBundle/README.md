@@ -35,7 +35,7 @@ BillionMail's current fork configuration defines these default ports:
 | Dovecot IMAPS | 993 | Recommended for Mautic monitored bounces/unsubscribes |
 | Dovecot IMAP | 143 | Plain IMAP listener; do not use over an untrusted network |
 
-Use the deployed `BILLIONMAIL_HOSTNAME` as the host and the password of a real mailbox. BillionMail mailbox usernames are full addresses (for example, `marketing@example.com`), so URL-encode the `@` as `%40` in the DSN. URL-encode reserved password characters too. These default ports are configurable in BillionMail's compose environment, so verify the deployed values before use.
+Use the deployed `BILLIONMAIL_HOSTNAME` as the host and the password of a real mailbox. BillionMail mailbox usernames are full addresses (for example, `marketing@example.com`), so URL-encode the `@` as `%40` in the DSN. URL-encode reserved password characters too. These default ports are configurable in BillionMail's compose environment, so verify the deployed values before use. When the port is omitted, `billionmail+smtp` defaults to `587` and `billionmail+smtps` defaults to `465`.
 
 Optional throughput controls:
 
