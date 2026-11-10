@@ -33,10 +33,10 @@ Mautic 7.2.2 supports PHP 8.2–8.5 and requires at least MySQL 8.4 or MariaDB 1
 From the repository root:
 
 ```bash
-bash deploy/oracle/provision-tenant.sh pilot 8080 <wallza-organization-uuid>
+bash deploy/oracle/provision-tenant.sh pilot 8080 00000000-0000-4000-8000-000000000001
 ```
 
-Use a unique lowercase slug and unique host port for every customer. The provisioner generates separate random database and root passwords, stores them outside the Git checkout under:
+Replace the example UUID with the actual immutable `organizations.id` UUID from WallzaOS. Use a unique lowercase slug and unique host port for every customer. The provisioner generates separate random database and root passwords, stores them outside the Git checkout under:
 
 ```text
 ~/.config/wallzaos-mautic/tenants/<tenant-slug>/.env
