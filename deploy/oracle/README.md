@@ -156,11 +156,11 @@ Edit only the tenant's private env file and set:
 The SSO secret is passed only to `mautic_web`; cron and worker containers do not receive it. After editing the env file, recreate only the web service to apply the SSO settings:
 
 ```bash
-docker compose \\
-  --project-directory deploy/oracle \\
-  --project-name wallza-mautic-pilot \\
-  --env-file ~/.config/wallzaos-mautic/tenants/pilot/.env \\
-  -f deploy/oracle/compose.yaml \\
+docker compose \
+  --project-directory deploy/oracle \
+  --project-name wallza-mautic-pilot \
+  --env-file ~/.config/wallzaos-mautic/tenants/pilot/.env \
+  -f deploy/oracle/compose.yaml \
   up -d mautic_web
 ```
 
