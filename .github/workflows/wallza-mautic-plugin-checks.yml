@@ -6,6 +6,7 @@ on:
       - wallza/marketing-automation-upgrades
     paths:
       - "plugins/MauticBillionMailBundle/**"
+      - "plugins/MauticWallzaIdentityBundle/**"
       - "composer.json"
       - "composer.lock"
       - "deploy/oracle/**"
@@ -59,6 +60,10 @@ jobs:
         working-directory: plugins/MauticBillionMailBundle
         run: composer validate --no-check-publish --no-interaction
 
+      - name: Validate Wallza Identity plugin Composer metadata
+        working-directory: plugins/MauticWallzaIdentityBundle
+        run: composer validate --no-check-publish --no-interaction
+
       - name: Install Mautic dependencies for focused plugin tests
         run: composer install --prefer-dist --no-progress --no-interaction --no-scripts
 
@@ -76,13 +81,16 @@ jobs:
       - name: Run BillionMail PHPUnit tests in Mautic's test environment
         run: php bin/phpunit --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist plugins/MauticBillionMailBundle/Tests
 
+      - name: Run Wallza Identity PHPUnit tests in Mautic's test environment
+        run: php bin/phpunit --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist plugins/MauticWallzaIdentityBundle/Tests
+
       - name: Verify message reached the SMTP sink
         run: |
           curl --fail --silent --show-error http://127.0.0.1:8025/api/v1/messages \
             | jq -e '.messages | any(.Subject == "Wallza BillionMail transport smoke test")' >/dev/null
 
       - name: Lint plugin PHP files
-        run: find plugins/MauticBillionMailBundle -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l
+        run: find plugins/MauticBillionMailBundle plugins/MauticWallzaIdentityBundle -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l
 
       - name: Build pinned Oracle Mautic image
         run: docker build --pull --file deploy/oracle/Dockerfile --tag wallzaos/mautic:ci .
