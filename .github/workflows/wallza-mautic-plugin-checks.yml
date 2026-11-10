@@ -138,3 +138,7 @@ jobs:
           grep -F 'DOCKER_MAUTIC_WORKERS_CONSUME_HIT:' deploy/oracle/compose.yaml
           grep -F 'DOCKER_MAUTIC_WORKERS_CONSUME_FAILED:' deploy/oracle/compose.yaml
           docker compose --env-file deploy/oracle/.env.example -f deploy/oracle/compose.yaml config --quiet
+          docker compose --env-file deploy/oracle/.env.example -f deploy/oracle/compose.yaml config --format json \
+            | jq -e '.services.mautic_web.environment.WALLZA_SSO_HMAC_SECRET == "" and
+                     (.services.mautic_cron.environment | has("WALLZA_SSO_HMAC_SECRET") | not) and
+                     (.services.mautic_worker.environment | has("WALLZA_SSO_HMAC_SECRET") | not)' >/dev/null
