@@ -93,10 +93,16 @@ final class BillionMailTransportFactoryTest extends TestCase
 
         $this->assertInstanceOf(EsmtpTransport::class, $startTls);
         $this->assertInstanceOf(EsmtpTransport::class, $implicitTls);
-        $this->assertSame(587, $startTls->getStream()->getPort());
-        $this->assertFalse($startTls->getStream()->isTLS());
-        $this->assertSame(465, $implicitTls->getStream()->getPort());
-        $this->assertTrue($implicitTls->getStream()->isTLS());
+
+        $startTlsStream = $startTls->getStream();
+        $implicitTlsStream = $implicitTls->getStream();
+
+        $this->assertInstanceOf(SocketStream::class, $startTlsStream);
+        $this->assertInstanceOf(SocketStream::class, $implicitTlsStream);
+        $this->assertSame(587, $startTlsStream->getPort());
+        $this->assertFalse($startTlsStream->isTLS());
+        $this->assertSame(465, $implicitTlsStream->getPort());
+        $this->assertTrue($implicitTlsStream->isTLS());
     }
 
     public function testTlsRequirementCanOnlyBeDisabledExplicitly(): void
