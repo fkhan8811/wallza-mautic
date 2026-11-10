@@ -71,9 +71,14 @@ jobs:
             echo "BillionMail plugin autoload and PHP IMAP checks passed.".PHP_EOL;
           '
 
-      - name: Validate Oracle Compose and tenant provisioner
+      - name: Test tenant provisioner safety
         run: |
           bash -n deploy/oracle/provision-tenant.sh
+          bash -n deploy/oracle/tests/provisioner-smoke.sh
+          bash deploy/oracle/tests/provisioner-smoke.sh
+
+      - name: Validate Oracle Compose and tenant cron
+        run: |
           test -s deploy/oracle/mautic-cron
           grep -F 'mautic:email:fetch --message-limit=100' deploy/oracle/mautic-cron
           grep -F 'DOCKER_MAUTIC_ROLE: mautic_web' deploy/oracle/compose.yaml
