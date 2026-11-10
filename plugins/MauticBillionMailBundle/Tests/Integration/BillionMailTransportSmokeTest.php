@@ -23,7 +23,7 @@ final class BillionMailTransportSmokeTest extends TestCase
         $factory = new BillionMailTransportFactory(new EventDispatcher(), null, new NullLogger());
         $transport = $factory->create(Dsn::fromString($dsn));
 
-        $transport->send(
+        $sentMessage = $transport->send(
             (new Email())
                 ->from('wallza-smoke@example.test')
                 ->to('recipient@example.test')
@@ -31,6 +31,6 @@ final class BillionMailTransportSmokeTest extends TestCase
                 ->text('The BillionMail SMTP transport delivered this test message.')
         );
 
-        self::assertTrue(true, 'The SMTP transport completed the message send without an exception.');
+        self::assertNotNull($sentMessage, 'The SMTP transport should return a sent-message result.');
     }
 }
