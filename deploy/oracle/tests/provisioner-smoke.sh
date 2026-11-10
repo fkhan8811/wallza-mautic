@@ -127,6 +127,18 @@ fi
 [[ ! -e "$TENANTS_DIR/another-tenant/.env" ]]
 grep -Fq "already assigned to tenant 'pilot'" "$TMP_DIR/duplicate-port.log"
 
+# One Wallza organization must map to one isolated Mautic stack, even if a
+# caller chooses a different slug and host port.
+if bash "$SCRIPT_DIR/provision-tenant.sh" duplicate-org 8087 "e48b9f6f-9c4c-4c3d-aeab-c6ed3f0ef999" > "$TMP_DIR/duplicate-org.log" 2>&1; then
+  echo "Expected an existing Wallza organization mapping to block a second tenant stack." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "3" ]]
+fi
+[[ ! -e "$TENANTS_DIR/duplicate-org/.env" ]]
+grep -Fq "already assigned to tenant 'pilot'" "$TMP_DIR/duplicate-org.log"
+
 # An existing env file with an unknown port must fail closed rather than letting
 # Compose's default port be accidentally reused.
 mkdir -p "$TENANTS_DIR/legacy"
