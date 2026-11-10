@@ -77,7 +77,12 @@ services:
     environment:
       <<: *mautic_environment
       DOCKER_MAUTIC_ROLE: mautic_cron
-    volumes: *mautic_volumes
+    volumes:
+      - mautic_config:/var/www/html/config
+      - mautic_logs:/var/www/html/var/logs
+      - mautic_media_files:/var/www/html/docroot/media/files
+      - mautic_media_images:/var/www/html/docroot/media/images
+      - ./mautic-cron:/opt/mautic/cron/mautic:ro
     depends_on:
       mautic_web:
         condition: service_healthy
