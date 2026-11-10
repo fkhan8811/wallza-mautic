@@ -7,13 +7,10 @@ on:
     paths:
       - "plugins/MauticBillionMailBundle/**"
       - "composer.json"
+      - "composer.lock"
+      - "deploy/oracle/**"
+      - ".dockerignore"
       - ".github/workflows/wallza-mautic-plugin-checks.yml"
-  pull_request:
-    branches:
-      - wallza/mautic-7.2.2
-    paths:
-      - "plugins/MauticBillionMailBundle/**"
-      - "composer.json"
 
 permissions:
   contents: read
@@ -28,16 +25,28 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.3"
+          php-version: "8.2"
           tools: composer:v2
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, mysql, pdo_mysql
           coverage: none
 
-      - name: Validate root Composer metadata
-        run: composer validate --no-check-publish --no-check-lock --no-interaction
+      - name: Validate root Composer metadata and lock file
+        run: composer validate --no-check-publish --no-interaction
 
       - name: Validate BillionMail plugin Composer metadata
         working-directory: plugins/MauticBillionMailBundle
         run: composer validate --no-check-publish --no-interaction
 
+      - name: Install Mautic dependencies for focused plugin tests
+        run: composer install --prefer-dist --no-progress --no-interaction --no-scripts
+
+      - name: Run BillionMail PHPUnit tests in Mautic's test environment
+        run: php bin/phpunit --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist plugins/MauticBillionMailBundle/Tests
+
       - name: Lint plugin PHP files
         run: find plugins/MauticBillionMailBundle -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l
+
+      - name: Validate Oracle Compose and tenant provisioner
+        run: |
+          bash -n deploy/oracle/provision-tenant.sh
+          docker compose --env-file deploy/oracle/.env.example -f deploy/oracle/compose.yaml config --quiet
