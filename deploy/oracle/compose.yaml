@@ -48,6 +48,12 @@ services:
       MAUTIC_MESSENGER_DSN_HIT: doctrine://default
       DOCKER_MAUTIC_LOAD_TEST_DATA: "0"
       PHP_INI_VALUE_MEMORY_LIMIT: 512M
+      WALLZA_MAUTIC_TENANT_ID: ${WALLZA_MAUTIC_TENANT_ID:-}
+      WALLZA_MAUTIC_BASE_URL: ${WALLZA_MAUTIC_BASE_URL:-}
+      WALLZA_SSO_AUTHORIZE_URL: ${WALLZA_SSO_AUTHORIZE_URL:-}
+      WALLZA_SSO_TOKEN_URL: ${WALLZA_SSO_TOKEN_URL:-}
+      WALLZA_SSO_ISSUER: ${WALLZA_SSO_ISSUER:-https://api.wallza.in}
+      WALLZA_SSO_HMAC_SECRET: ${WALLZA_SSO_HMAC_SECRET:-}
     volumes: &mautic_volumes
       - mautic_config:/var/www/html/config
       - mautic_logs:/var/www/html/var/logs
