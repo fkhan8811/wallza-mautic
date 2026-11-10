@@ -10,7 +10,6 @@ use Mautic\UserBundle\Event\AuthenticationEvent;
 use Mautic\UserBundle\Security\Authentication\Token\PluginToken;
 use MauticPlugin\MauticWallzaIdentityBundle\EventListener\WallzaSsoSubscriber;
 use MauticPlugin\MauticWallzaIdentityBundle\Integration\WallzaIntegration;
-use MauticPlugin\MauticWallzaIdentityBundle\Integration\WallzaIntegration;
 use MauticPlugin\MauticWallzaIdentityBundle\Security\WallzaSsoAssertionVerifier;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -20,10 +19,10 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
-use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
-use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
+use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 final class WallzaSsoSubscriberTest extends TestCase
