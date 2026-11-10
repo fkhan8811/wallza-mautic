@@ -86,7 +86,7 @@ Mautic 7.2.2 already has a monitored IMAP inbox processor:
 
 Use **Settings → Configuration → Email Settings → Monitored Inbox Settings** to configure the IMAP Default Mailbox and the Bounces folder; optionally configure Unsubscribe Requests and Contact Replies. The folder entries can share the default IMAP connection or use their own override settings. The configured IMAP host/port/TLS and mailbox credentials must come from the deployed BillionMail mailbox setup; do not assume they equal the SMTP submission settings.
 
-This gives Mautic a native IMAP-based way to ingest feedback messages that BillionMail delivers to those folders. It does **not** provide instant webhook reconciliation or prove that BillionMail automatically routes every delivered/deferred/bounce/complaint event into that mailbox. Delivery and provider-event synchronization must be verified against the live BillionMail deployment.
+This gives Mautic a native IMAP-based way to ingest feedback messages that BillionMail delivers to those folders. The supplied Oracle stack mounts a custom cron file that runs `mautic:email:fetch --message-limit=100` every minute and retains Mautic's standard segment/campaign update jobs. The stock image template leaves monitored-email polling commented out, so this custom schedule is required for automatic feedback processing in this stack. It does **not** provide instant webhook reconciliation or prove that BillionMail automatically routes every delivered/deferred/bounce/complaint event into that mailbox. Delivery and provider-event synchronization must be verified against the live BillionMail deployment.
 
 ## 5. Delivery event reconciliation
 
