@@ -8,7 +8,7 @@ on:
   merge_group:
   schedule:
     # Run every day at 10:45 AM UTC to discover potential issues with dependencies like PHP updates etc.
-    - cron: '45 10 * * *' 
+    - cron: '45 10 * * *'
 
 concurrency:
   group: mautic-full-ci-${{ github.event.pull_request.number || github.ref }}
