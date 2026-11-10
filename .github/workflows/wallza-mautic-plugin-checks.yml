@@ -7,7 +7,6 @@ on:
     paths:
       - "plugins/MauticBillionMailBundle/**"
       - "plugins/MauticWallzaIdentityBundle/**"
-      - "plugins/MauticWallzaIdentityBundle/**"
       - "composer.json"
       - "composer.lock"
       - "deploy/oracle/**"
