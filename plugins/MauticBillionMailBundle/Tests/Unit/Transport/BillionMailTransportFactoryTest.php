@@ -86,6 +86,7 @@ final class BillionMailTransportFactoryTest extends TestCase
 
         $this->assertInstanceOf(EsmtpTransport::class, $transport);
         $this->assertTrue($transport->isTlsRequired());
+        $this->assertFalse($transport->isAutoTls());
 
         $stream = $transport->getStream();
         $this->assertInstanceOf(SocketStream::class, $stream);
