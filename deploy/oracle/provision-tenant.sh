@@ -4,19 +4,24 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 TENANT_SLUG="${1:-}"
 HTTP_PORT="${2:-8080}"
+WALLZA_MAUTIC_TENANT_ID="${3:-${WALLZA_MAUTIC_TENANT_ID:-}}"
+WALLZA_MAUTIC_BASE_URL="${WALLZA_MAUTIC_BASE_URL:-}"
+WALLZA_SSO_AUTHORIZE_URL="${WALLZA_SSO_AUTHORIZE_URL:-}"
+WALLZA_SSO_TOKEN_URL="${WALLZA_SSO_TOKEN_URL:-}"
+WALLZA_SSO_ISSUER="${WALLZA_SSO_ISSUER:-https://api.wallza.in}"
 TENANTS_DIR="${WALLZA_MAUTIC_TENANTS_DIR:-$HOME/.config/wallzaos-mautic/tenants}"
 
 usage() {
   cat <<'USAGE'
 Usage:
-  ./provision-tenant.sh <tenant-slug> [localhost-port]
+  ./provision-tenant.sh <tenant-slug> [localhost-port] [wallza-organization-uuid]
 
 Creates one isolated Mautic stack with its own database, configuration,
 logs and media volumes. The web port binds to 127.0.0.1 only.
 
 Examples:
   ./provision-tenant.sh pilot 8080
-  ./provision-tenant.sh customer-blue 8081
+  ./provision-tenant.sh customer-blue 8081 00000000-0000-4000-8000-000000000001
 
 The generated tenant env file is stored outside the Git repository with
 permissions restricted to the current operating-system user.
@@ -30,6 +35,11 @@ fi
 
 if [[ ! "$TENANT_SLUG" =~ ^[a-z0-9][a-z0-9-]{0,38}$ ]]; then
   echo "Invalid tenant slug. Use 1-39 lowercase letters, numbers or hyphens; start with a letter/number." >&2
+  exit 2
+fi
+
+if [[ -n "$WALLZA_MAUTIC_TENANT_ID" && ! "$WALLZA_MAUTIC_TENANT_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+  echo "Wallza organization ID must be a UUID when supplied." >&2
   exit 2
 fi
 
@@ -122,6 +132,7 @@ chmod 700 "$TENANT_ENV_DIR"
 
 DB_PASSWORD="$(openssl rand -hex 24)"
 DB_ROOT_PASSWORD="$(openssl rand -hex 32)"
+WALLZA_SSO_HMAC_SECRET="$(openssl rand -hex 32)"
 
 cat > "$TENANT_ENV_FILE" <<ENV
 COMPOSE_PROJECT_NAME=$PROJECT_NAME
@@ -143,6 +154,12 @@ MAUTIC_WORKER_CPUS=0.25
 MAUTIC_WORKERS_CONSUME_EMAIL=1
 MAUTIC_WORKERS_CONSUME_HIT=1
 MAUTIC_WORKERS_CONSUME_FAILED=1
+WALLZA_MAUTIC_TENANT_ID=$WALLZA_MAUTIC_TENANT_ID
+WALLZA_MAUTIC_BASE_URL=$WALLZA_MAUTIC_BASE_URL
+WALLZA_SSO_AUTHORIZE_URL=$WALLZA_SSO_AUTHORIZE_URL
+WALLZA_SSO_TOKEN_URL=$WALLZA_SSO_TOKEN_URL
+WALLZA_SSO_ISSUER=$WALLZA_SSO_ISSUER
+WALLZA_SSO_HMAC_SECRET=$WALLZA_SSO_HMAC_SECRET
 ENV
 chmod 600 "$TENANT_ENV_FILE"
 
@@ -164,8 +181,10 @@ Next:
   1. Put this stack behind your HTTPS reverse proxy; the Mautic port is intentionally bound to loopback.
   2. Complete Mautic's first-run installer for this tenant.
   3. Configure this tenant's own BillionMail SMTP mailbox and IMAP feedback mailbox in Mautic.
-  4. Keep the tenant's Mautic API credentials server-side in WallzaOS.
-  5. Back up this project's database and Mautic volumes before upgrades.
+  4. Configure the Wallza organization UUID, trusted HTTPS SSO endpoints, tenant URL and generated HMAC secret in the private env file.
+  5. Provision existing Mautic users through the tenant API; SSO never creates users or changes Mautic roles.
+  6. Keep the tenant's Mautic API credentials server-side in WallzaOS.
+  7. Back up this project's database and Mautic volumes before upgrades.
 
 Do not use "docker compose down -v" unless you intend to erase this tenant's database and uploaded files.
 NEXT
