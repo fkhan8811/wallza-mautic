@@ -40,7 +40,7 @@ final class WallzaSsoSubscriberTest extends TestCase
         $request = Request::create('/s/sso_login/Wallza');
         $request->setSession($session);
         $router = $this->createMock(RouterInterface::class);
-        $router->expects(self::once())
+        $router->expects($this->once())
             ->method('generate')
             ->with('mautic_sso_login_check', ['integration' => 'Wallza'], UrlGeneratorInterface::ABSOLUTE_PATH)
             ->willReturn('/s/sso_login_check/Wallza');
@@ -84,7 +84,7 @@ final class WallzaSsoSubscriberTest extends TestCase
         $user->method('getEmail')->willReturn('faisal@example.test');
 
         $userRepository = $this->createMock(UserRepository::class);
-        $userRepository->expects(self::once())
+        $userRepository->expects($this->once())
             ->method('findOneBy')
             ->with(['username' => '6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba'])
             ->willReturn($user);
@@ -127,7 +127,7 @@ final class WallzaSsoSubscriberTest extends TestCase
         $router->method('generate')->willReturn('/s/sso_login_check/Wallza');
 
         $userRepository = $this->createMock(UserRepository::class);
-        $userRepository->expects(self::once())
+        $userRepository->expects($this->once())
             ->method('findOneBy')
             ->with(['username' => '6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba'])
             ->willReturn(null);
@@ -167,7 +167,7 @@ final class WallzaSsoSubscriberTest extends TestCase
         $user->method('getEmail')->willReturn('different@example.test');
 
         $userRepository = $this->createMock(UserRepository::class);
-        $userRepository->expects(self::once())
+        $userRepository->expects($this->once())
             ->method('findOneBy')
             ->with(['username' => '6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba'])
             ->willReturn($user);
@@ -234,7 +234,7 @@ final class WallzaSsoSubscriberTest extends TestCase
         $user->method('getEmail')->willReturn('faisal@example.test');
 
         $userRepository = $this->createMock(UserRepository::class);
-        $userRepository->expects(self::once())
+        $userRepository->expects($this->once())
             ->method('findOneBy')
             ->with(['username' => '6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba'])
             ->willReturn($user);
@@ -269,7 +269,7 @@ final class WallzaSsoSubscriberTest extends TestCase
         );
 
         $router = $this->createMock(RouterInterface::class);
-        $router->expects(self::never())->method('generate');
+        $router->expects($this->never())->method('generate');
 
         $subscriber = $this->subscriber($router, new MockHttpClient());
         $subscriber->onUserPreAuthentication($event);
