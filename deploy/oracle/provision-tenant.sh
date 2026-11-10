@@ -65,6 +65,22 @@ if [[ -e "$TENANT_ENV_FILE" ]]; then
   exit 3
 fi
 
+# A deleted env file must not allow a new set of passwords to be generated
+# for an old Compose project that still contains customer data/volumes.
+existing_resources="$(
+  {
+    docker ps -aq --filter "label=com.docker.compose.project=$PROJECT_NAME"
+    docker volume ls -q --filter "label=com.docker.compose.project=$PROJECT_NAME"
+    docker network ls -q --filter "label=com.docker.compose.project=$PROJECT_NAME"
+  } | sed '/^$/d' | sort -u
+)"
+if [[ -n "$existing_resources" ]]; then
+  echo "Docker resources already exist for Compose project '$PROJECT_NAME'." >&2
+  echo "Refusing to generate new database passwords for an existing tenant stack." >&2
+  echo "Restore the tenant env file or perform an explicit, reviewed recovery." >&2
+  exit 3
+fi
+
 umask 077
 mkdir -p "$TENANT_ENV_DIR"
 chmod 700 "$TENANT_ENV_DIR"
