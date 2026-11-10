@@ -101,6 +101,11 @@ services:
     environment:
       <<: *mautic_environment
       DOCKER_MAUTIC_ROLE: mautic_worker
+      # Mautic's official image defaults to two consumers per queue (six total).
+      # Keep the initial Oracle pilot small; tune only after measuring queue depth and RAM.
+      DOCKER_MAUTIC_WORKERS_CONSUME_EMAIL: ${MAUTIC_WORKERS_CONSUME_EMAIL:-1}
+      DOCKER_MAUTIC_WORKERS_CONSUME_HIT: ${MAUTIC_WORKERS_CONSUME_HIT:-1}
+      DOCKER_MAUTIC_WORKERS_CONSUME_FAILED: ${MAUTIC_WORKERS_CONSUME_FAILED:-1}
     volumes: *mautic_volumes
     depends_on:
       mautic_web:
