@@ -7,6 +7,7 @@ on:
     paths:
       - "plugins/MauticBillionMailBundle/**"
       - "plugins/MauticWallzaIdentityBundle/**"
+      - "plugins/MauticWallzaIdentityBundle/**"
       - "composer.json"
       - "composer.lock"
       - "deploy/oracle/**"
@@ -17,6 +18,7 @@ on:
       - wallza/mautic-7.2.2
     paths:
       - "plugins/MauticBillionMailBundle/**"
+      - "plugins/MauticWallzaIdentityBundle/**"
       - "composer.json"
       - "composer.lock"
       - "deploy/oracle/**"
@@ -103,6 +105,11 @@ jobs:
               "MauticPlugin\\MauticBillionMailBundle\\MauticBillionMailBundle",
               "MauticPlugin\\MauticBillionMailBundle\\DependencyInjection\\MauticBillionMailExtension",
               "MauticPlugin\\MauticBillionMailBundle\\Transport\\BillionMailTransportFactory",
+              "MauticPlugin\\MauticWallzaIdentityBundle\\MauticWallzaIdentityBundle",
+              "MauticPlugin\\MauticWallzaIdentityBundle\\DependencyInjection\\MauticWallzaIdentityExtension",
+              "MauticPlugin\\MauticWallzaIdentityBundle\\Integration\\WallzaIntegration",
+              "MauticPlugin\\MauticWallzaIdentityBundle\\EventListener\\WallzaSsoSubscriber",
+              "MauticPlugin\\MauticWallzaIdentityBundle\\Security\\WallzaSsoAssertionVerifier",
             ];
             foreach ($classes as $class) {
               if (!class_exists($class)) {
