@@ -12,12 +12,11 @@ use MauticPlugin\MauticWallzaIdentityBundle\Security\WallzaSsoAssertionVerifier;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Routing\RouterInterface;
-use Throwable;
 
 final readonly class WallzaSsoSubscriber implements EventSubscriberInterface
 {
@@ -66,7 +65,7 @@ final readonly class WallzaSsoSubscriber implements EventSubscriberInterface
             }
 
             $this->completeLogin($event);
-        } catch (Throwable $exception) {
+        } catch (\\Throwable $exception) {
             // Never log authorization codes, JWT assertions, or secret values.
             $this->logger->warning('Wallza SSO authentication failed.', ['exception' => $exception::class]);
             $this->fail($event);
