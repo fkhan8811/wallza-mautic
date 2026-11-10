@@ -6,11 +6,13 @@ namespace MauticPlugin\MauticBillionMailBundle\Tests\Unit\Transport;
 
 use Mautic\CoreBundle\Helper\Dsn\Dsn as MauticDsn;
 use Mautic\EmailBundle\DependencyInjection\EnvProcessor\MailerDsnEnvVarProcessor;
+use Mautic\EmailBundle\Mailer\Transport\TransportFactory as MauticTransportFactory;
 use MauticPlugin\MauticBillionMailBundle\Transport\BillionMailTransportFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Mailer\Exception\UnsupportedSchemeException;
+use Symfony\Component\Mailer\Transport as SymfonyTransport;
 use Symfony\Component\Mailer\Transport\Dsn;
 use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 use Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream;
@@ -40,6 +42,21 @@ final class BillionMailTransportFactoryTest extends TestCase
 
         $transport = $this->factory()->create(Dsn::fromString($processed));
         $this->assertSame('marketing@example.com', $transport->getUsername());
+    }
+
+    public function testMauticTransportFactoryResolvesBillionMailDsn(): void
+    {
+        $transportFactory = new MauticTransportFactory(
+            new SymfonyTransport([$this->factory()])
+        );
+
+        $transport = $transportFactory->fromDsnObject(Dsn::fromString(
+            'billionmail+smtp://mailer:secret@mail.example.test:587'
+        ));
+
+        $this->assertInstanceOf(EsmtpTransport::class, $transport);
+        $this->assertSame('mailer', $transport->getUsername());
+        $this->assertTrue($transport->isTlsRequired());
     }
 
     public function testOnlyBillionMailSchemesAreSupported(): void
