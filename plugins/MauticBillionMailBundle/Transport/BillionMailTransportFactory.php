@@ -30,7 +30,7 @@ final class BillionMailTransportFactory extends AbstractTransportFactory
         $scheme = $dsn->getScheme();
         $autoTls = filter_var($dsn->getOption('auto_tls', true), FILTER_VALIDATE_BOOL);
         $tls = 'billionmail+smtps' === $scheme ? true : ($autoTls ? null : false);
-        $port = $dsn->getPort(0) ?? 0;
+        $port = $dsn->getPort('billionmail+smtps' === $scheme ? 465 : 587);
 
         $transport = new EsmtpTransport(
             $dsn->getHost(),
