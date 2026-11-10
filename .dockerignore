@@ -5,6 +5,8 @@
 !plugins/
 !plugins/MauticBillionMailBundle/
 !plugins/MauticBillionMailBundle/**
+!plugins/MauticWallzaIdentityBundle/
+!plugins/MauticWallzaIdentityBundle/**
 
 !deploy/
 !deploy/oracle/
