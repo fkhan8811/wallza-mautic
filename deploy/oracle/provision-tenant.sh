@@ -156,6 +156,15 @@ while IFS= read -r -d '' existing_env; do
     exit 3
   fi
   existing_port=$((10#$existing_port))
+  existing_tenant_id="$(sed -n 's/^WALLZA_MAUTIC_TENANT_ID=//p' "$existing_env" | head -n 1)"
+  if [[ -n "$WALLZA_MAUTIC_TENANT_ID" && -n "$existing_tenant_id" \
+      && "${existing_tenant_id,,}" == "${WALLZA_MAUTIC_TENANT_ID,,}" ]]; then
+    existing_slug="$(basename "$(dirname "$existing_env")")"
+    echo "Wallza organization '$WALLZA_MAUTIC_TENANT_ID' is already assigned to tenant '$existing_slug'." >&2
+    echo "Refusing to create a second Mautic stack for the same organization." >&2
+    exit 3
+  fi
+
   if (( existing_port < 1024 || existing_port > 65535 )); then
     existing_slug="$(basename "$(dirname "$existing_env")")"
     echo "Tenant '$existing_slug' has an invalid reserved host port." >&2
