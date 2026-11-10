@@ -151,7 +151,7 @@ Edit only the tenant's private env file and set:
 - `WALLZA_SSO_AUTHORIZE_URL`: trusted WallzaOS HTTPS authorization endpoint.
 - `WALLZA_SSO_TOKEN_URL`: trusted WallzaOS HTTPS one-time-code exchange endpoint.
 - `WALLZA_SSO_ISSUER`: the exact HTTPS `iss` claim the token endpoint signs.
-- `WALLZA_SSO_HMAC_SECRET`: leave the generated 64-hex-character value unchanged.
+- `WALLZA_SSO_HMAC_SECRET`: leave the generated 64-hex-character value unchanged. WallzaOS must use this exact 64-character ASCII/UTF-8 text as the HTTP Basic password and HS256 HMAC key; do not hex-decode it before signing.
 
 The SSO secret is passed only to `mautic_web`; cron and worker containers do not receive it. After editing the env file, recreate only the web service to apply the SSO settings:
 
