@@ -60,7 +60,7 @@ export WALLZA_MAUTIC_TENANTS_DIR="$TENANTS_DIR"
 export MOCK_DOCKER_CALL_LOG="$TMP_DIR/docker-calls.log"
 
 # Port values are normalized as decimal (08080 -> 8080).
-bash "$SCRIPT_DIR/provision-tenant.sh" pilot 08080 > "$TMP_DIR/provision.log"
+bash "$SCRIPT_DIR/provision-tenant.sh" pilot 08080 "e48b9f6f-9c4c-4c3d-aeab-c6ed3f0ef999" > "$TMP_DIR/provision.log"
 ENV_FILE="$TENANTS_DIR/pilot/.env"
 [[ -f "$ENV_FILE" ]]
 grep -Fxq 'MAUTIC_HTTP_PORT=8080' "$ENV_FILE"
@@ -68,6 +68,84 @@ grep -Fxq 'COMPOSE_PROJECT_NAME=wallza-mautic-pilot' "$ENV_FILE"
 grep -Fxq 'MAUTIC_WORKERS_CONSUME_EMAIL=1' "$ENV_FILE"
 grep -Fxq 'MAUTIC_WORKERS_CONSUME_HIT=1' "$ENV_FILE"
 grep -Fxq 'MAUTIC_WORKERS_CONSUME_FAILED=1' "$ENV_FILE"
+grep -Fxq 'WALLZA_MAUTIC_TENANT_ID=e48b9f6f-9c4c-4c3d-aeab-c6ed3f0ef999' "$ENV_FILE"
+grep -Fxq 'WALLZA_SSO_ISSUER=https://api.wallza.in' "$ENV_FILE"
+grep -Eq '^WALLZA_SSO_HMAC_SECRET=[a-f0-9]{64}
+[[ "$(stat -c '%a' "$TENANTS_DIR/pilot")" == "700" ]]
+[[ "$(stat -c '%a' "$ENV_FILE")" == "600" ]]
+grep -Fq 'wallza-mautic-pilot' "$MOCK_DOCKER_CALL_LOG"
+
+LOCK_ROOT="$TENANTS_DIR/.provisioning-locks"
+[[ ! -e "$LOCK_ROOT/tenant-pilot.lock" ]]
+[[ ! -e "$LOCK_ROOT/port-8080.lock" ]]
+
+# A tenant lock prevents a second simultaneous provision request for the same slug.
+mkdir -p "$LOCK_ROOT/tenant-busy.lock"
+if bash "$SCRIPT_DIR/provision-tenant.sh" busy 8082 > "$TMP_DIR/tenant-lock.log" 2>&1; then
+  echo "Expected an active tenant lock to block concurrent provisioning." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "3" ]]
+fi
+[[ ! -e "$TENANTS_DIR/busy/.env" ]]
+rmdir "$LOCK_ROOT/tenant-busy.lock"
+
+# A port lock prevents two distinct tenants claiming the same localhost port.
+mkdir -p "$LOCK_ROOT/port-8083.lock"
+if bash "$SCRIPT_DIR/provision-tenant.sh" port-busy 8083 > "$TMP_DIR/port-lock.log" 2>&1; then
+  echo "Expected an active port lock to block concurrent provisioning." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "3" ]]
+fi
+[[ ! -e "$TENANTS_DIR/port-busy/.env" ]]
+rmdir "$LOCK_ROOT/port-8083.lock"
+
+# Existing tenant secrets must never be overwritten.
+if bash "$SCRIPT_DIR/provision-tenant.sh" pilot 8081 > "$TMP_DIR/overwrite.log" 2>&1; then
+  echo "Expected existing tenant env to be protected from overwrite." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "3" ]]
+fi
+grep -Fxq 'MAUTIC_HTTP_PORT=8080' "$ENV_FILE"
+
+# If the env file is lost but Compose resources remain, provisioning must stop.
+rm "$ENV_FILE"
+export MOCK_DOCKER_RESOURCE_OUTPUT="orphaned-volume"
+if bash "$SCRIPT_DIR/provision-tenant.sh" pilot 8080 > "$TMP_DIR/orphan.log" 2>&1; then
+  echo "Expected orphan Docker resources to block tenant reprovisioning." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "3" ]]
+fi
+[[ ! -e "$ENV_FILE" ]]
+grep -Fq "Docker resources already exist" "$TMP_DIR/orphan.log"
+
+# A malformed Wallza organization identifier must be rejected before locks or Docker resources are touched.
+if bash "$SCRIPT_DIR/provision-tenant.sh" invalid-tenant 8084 not-a-uuid > "$TMP_DIR/tenant-id.log" 2>&1; then
+  echo "Expected malformed Wallza organization UUID to be rejected." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "2" ]]
+fi
+
+# Invalid public ports must be rejected before Docker is invoked.
+if bash "$SCRIPT_DIR/provision-tenant.sh" invalid-port 80 > "$TMP_DIR/port.log" 2>&1; then
+  echo "Expected invalid port to be rejected." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "2" ]]
+fi
+
+echo "Tenant provisioner smoke tests passed."
+ "$ENV_FILE"
 [[ "$(stat -c '%a' "$TENANTS_DIR/pilot")" == "700" ]]
 [[ "$(stat -c '%a' "$ENV_FILE")" == "600" ]]
 grep -Fq 'wallza-mautic-pilot' "$MOCK_DOCKER_CALL_LOG"
