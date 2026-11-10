@@ -120,4 +120,7 @@ jobs:
           test -s deploy/oracle/mautic-cron
           grep -F 'mautic:email:fetch --message-limit=100' deploy/oracle/mautic-cron
           grep -F 'DOCKER_MAUTIC_ROLE: mautic_web' deploy/oracle/compose.yaml
+          grep -F 'DOCKER_MAUTIC_WORKERS_CONSUME_EMAIL:' deploy/oracle/compose.yaml
+          grep -F 'DOCKER_MAUTIC_WORKERS_CONSUME_HIT:' deploy/oracle/compose.yaml
+          grep -F 'DOCKER_MAUTIC_WORKERS_CONSUME_FAILED:' deploy/oracle/compose.yaml
           docker compose --env-file deploy/oracle/.env.example -f deploy/oracle/compose.yaml config --quiet
