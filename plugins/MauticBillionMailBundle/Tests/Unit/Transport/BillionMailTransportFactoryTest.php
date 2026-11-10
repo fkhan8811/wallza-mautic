@@ -86,6 +86,17 @@ final class BillionMailTransportFactoryTest extends TestCase
         $this->assertTrue($stream->isTLS());
     }
 
+    public function testUsesSchemeSpecificDefaultPorts(): void
+    {
+        $startTls = $this->factory()->create(Dsn::fromString('billionmail+smtp://mailer:secret@mail.example.test'));
+        $implicitTls = $this->factory()->create(Dsn::fromString('billionmail+smtps://mailer:secret@mail.example.test'));
+
+        $this->assertSame(587, $startTls->getStream()->getPort());
+        $this->assertFalse($startTls->getStream()->isTLS());
+        $this->assertSame(465, $implicitTls->getStream()->getPort());
+        $this->assertTrue($implicitTls->getStream()->isTLS());
+    }
+
     public function testTlsRequirementCanOnlyBeDisabledExplicitly(): void
     {
         $transport = $this->factory()->create(Dsn::fromString(
