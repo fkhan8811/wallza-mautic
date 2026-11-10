@@ -5,6 +5,10 @@ on:
     paths:
       - '**/*.json'  # Runs only when JSON files are modified
 
+concurrency:
+  group: mautic-json-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate-json:
     name: Validate modified JSON files
