@@ -27,16 +27,16 @@ final readonly class WallzaSsoAssertionVerifier
             || 1 !== preg_match('/\\A[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\\z/i', $this->tenantId)
             || '' === $this->issuer
         ) {
-            throw new \\RuntimeException('Wallza SSO is not configured.');
+            throw new \RuntimeException('Wallza SSO is not configured.');
         }
 
         if (strlen($assertion) > 8192) {
-            throw new RuntimeException('Wallza SSO assertion is too large.');
+            throw new \RuntimeException('Wallza SSO assertion is too large.');
         }
 
         $parts = explode('.', $assertion);
         if (3 !== count($parts) || '' === $parts[0] || '' === $parts[1] || '' === $parts[2]) {
-            throw new RuntimeException('Wallza SSO assertion is malformed.');
+            throw new \RuntimeException('Wallza SSO assertion is malformed.');
         }
 
         $header    = $this->decodeJsonPart($parts[0]);
@@ -44,12 +44,12 @@ final readonly class WallzaSsoAssertionVerifier
         $signature = $this->decodeBase64Url($parts[2]);
 
         if ('HS256' !== ($header['alg'] ?? null) || !is_string($header['typ'] ?? null) || 'JWT' !== $header['typ']) {
-            throw new RuntimeException('Wallza SSO assertion uses an unsupported signing algorithm.');
+            throw new \RuntimeException('Wallza SSO assertion uses an unsupported signing algorithm.');
         }
 
         $expectedSignature = hash_hmac('sha256', $parts[0].'.'.$parts[1], $this->secret, true);
         if (!hash_equals($expectedSignature, $signature)) {
-            throw new RuntimeException('Wallza SSO assertion signature is invalid.');
+            throw new \RuntimeException('Wallza SSO assertion signature is invalid.');
         }
 
         if (($payload['iss'] ?? null) !== $this->issuer
@@ -58,7 +58,7 @@ final readonly class WallzaSsoAssertionVerifier
             || !is_string($payload['state'] ?? null)
             || !hash_equals($expectedState, $payload['state'])
         ) {
-            throw new RuntimeException('Wallza SSO assertion has an invalid issuer, audience, tenant or state.');
+            throw new \RuntimeException('Wallza SSO assertion has an invalid issuer, audience, tenant or state.');
         }
 
         $issuedAt = $payload['iat'] ?? null;
@@ -70,7 +70,7 @@ final readonly class WallzaSsoAssertionVerifier
             || $expires <= $issuedAt
             || ($expires - $issuedAt) > 120
         ) {
-            throw new RuntimeException('Wallza SSO assertion is expired or outside the permitted time window.');
+            throw new \RuntimeException('Wallza SSO assertion is expired or outside the permitted time window.');
         }
 
         $subject = $payload['sub'] ?? null;
@@ -86,7 +86,7 @@ final readonly class WallzaSsoAssertionVerifier
             || !is_string($last) || '' === trim($last) || strlen($last) > 191
             || !is_string($jti) || '' === trim($jti) || strlen($jti) > 191
         ) {
-            throw new RuntimeException('Wallza SSO assertion is missing verified user identity fields.');
+            throw new \RuntimeException('Wallza SSO assertion is missing verified user identity fields.');
         }
 
         return $payload;
@@ -100,11 +100,11 @@ final readonly class WallzaSsoAssertionVerifier
         try {
             $decoded  = json_decode($this->decodeBase64Url($part), true, 16, JSON_THROW_ON_ERROR);
         } catch (\\JsonException $exception) {
-            throw new RuntimeException('Wallza SSO assertion contains invalid JSON.', 0, $exception);
+            throw new \RuntimeException('Wallza SSO assertion contains invalid JSON.', 0, $exception);
         }
 
         if (!is_array($decoded)) {
-            throw new RuntimeException('Wallza SSO assertion contains an invalid JSON object.');
+            throw new \RuntimeException('Wallza SSO assertion contains an invalid JSON object.');
         }
 
         return $decoded;
@@ -113,15 +113,15 @@ final readonly class WallzaSsoAssertionVerifier
     private function decodeBase64Url(string $part): string
     {
         if (1 === preg_match('/[^A-Za-z0-9_-]/', $part)) {
-            throw new RuntimeException('Wallza SSO assertion contains invalid base64url data.');
+            throw new \RuntimeException('Wallza SSO assertion contains invalid base64url data.');
         }
 
         $padded = strtr($part, '-_', '+/');
         $padded .= str_repeat('=', (4 - strlen($padded) % 4) % 4);
-        $decoded = base64_decode($padded, true);
+        $decoded  = base64_decode($padded, true);
 
         if (false === $decoded) {
-            throw new RuntimeException('Wallza SSO assertion contains invalid base64url data.');
+            throw new \RuntimeException('Wallza SSO assertion contains invalid base64url data.');
         }
 
         return $decoded;
