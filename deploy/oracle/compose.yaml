@@ -108,7 +108,7 @@ services:
   # Optional SMTP sink for testing the BillionMail transport in isolation.
   # Start with: docker compose --profile test-smtp up -d mailpit
   mailpit:
-    image: axllent/mailpit:v1.26
+    image: axllent/mailpit:v1.33.1
     profiles: ["test-smtp"]
     restart: unless-stopped
     ports:
