@@ -11,6 +11,20 @@ on:
       - "deploy/oracle/**"
       - ".dockerignore"
       - ".github/workflows/wallza-mautic-plugin-checks.yml"
+  pull_request:
+    branches:
+      - wallza/mautic-7.2.2
+    paths:
+      - "plugins/MauticBillionMailBundle/**"
+      - "composer.json"
+      - "composer.lock"
+      - "deploy/oracle/**"
+      - ".dockerignore"
+      - ".github/workflows/wallza-mautic-plugin-checks.yml"
+
+concurrency:
+  group: wallza-mautic-plugin-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -35,7 +49,7 @@ jobs:
         with:
           php-version: "8.2"
           tools: composer:v2
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, mysql, pdo_mysql
+          extensions: mbstring, xml, ctype, iconv, intl, imap, pdo_sqlite, mysql, pdo_mysql
           coverage: none
 
       - name: Validate root Composer metadata and lock file
