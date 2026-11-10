@@ -65,6 +65,9 @@ ENV_FILE="$TENANTS_DIR/pilot/.env"
 [[ -f "$ENV_FILE" ]]
 grep -Fxq 'MAUTIC_HTTP_PORT=8080' "$ENV_FILE"
 grep -Fxq 'COMPOSE_PROJECT_NAME=wallza-mautic-pilot' "$ENV_FILE"
+grep -Fxq 'MAUTIC_WORKERS_CONSUME_EMAIL=1' "$ENV_FILE"
+grep -Fxq 'MAUTIC_WORKERS_CONSUME_HIT=1' "$ENV_FILE"
+grep -Fxq 'MAUTIC_WORKERS_CONSUME_FAILED=1' "$ENV_FILE"
 [[ "$(stat -c '%a' "$TENANTS_DIR/pilot")" == "700" ]]
 [[ "$(stat -c '%a' "$ENV_FILE")" == "600" ]]
 grep -Fq 'wallza-mautic-pilot' "$MOCK_DOCKER_CALL_LOG"
