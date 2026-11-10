@@ -22,8 +22,8 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
-use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
+use Symfony\Component\Security\Http\SecurityRequestAttributes;
 
 final class WallzaSsoSubscriberTest extends TestCase
 {
@@ -265,7 +265,7 @@ final class WallzaSsoSubscriberTest extends TestCase
             $request,
             false,
             'Other',
-            ['Other' => new \stdClass()]
+            ['Other' => $this->wallzaIntegration()]
         );
 
         $router = $this->createMock(RouterInterface::class);
@@ -292,7 +292,7 @@ final class WallzaSsoSubscriberTest extends TestCase
             $request,
             $loginCheck,
             'Wallza',
-            ['Wallza' => new \stdClass()]
+            ['Wallza' => $this->wallzaIntegration()]
         );
     }
 
