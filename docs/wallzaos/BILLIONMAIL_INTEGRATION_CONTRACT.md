@@ -74,7 +74,7 @@ Recommended Mautic settings:
 
 Port 25 is not the authenticated mailbox submission endpoint. Prefer 587 or 465 for Mautic.
 
-## 6. Native Mautic IMAP feedback path
+## 5. Native Mautic IMAP feedback path
 
 Mautic 7.2.2 already has a monitored IMAP inbox processor:
 
@@ -88,7 +88,7 @@ Use **Settings → Configuration → Email Settings → Monitored Inbox Settings
 
 This gives Mautic a native IMAP-based way to ingest feedback messages that BillionMail delivers to those folders. The supplied Oracle stack mounts a custom cron file that runs `mautic:email:fetch --message-limit=100` every minute and retains Mautic's standard segment/campaign update jobs. The stock image template leaves monitored-email polling commented out, so this custom schedule is required for automatic feedback processing in this stack. It does **not** provide instant webhook reconciliation or prove that BillionMail automatically routes every delivered/deferred/bounce/complaint event into that mailbox. Delivery and provider-event synchronization must be verified against the live BillionMail deployment.
 
-## 5. Delivery event reconciliation
+## 6. Delivery event reconciliation
 
 No supported, documented provider webhook/signature contract was identified in the inspected BillionMail fork for mapping delivered, deferred, bounced, complained and rejected events back into Mautic. Do not invent an endpoint or accept unsigned public event callbacks.
 
