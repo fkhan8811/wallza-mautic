@@ -53,18 +53,22 @@ final class BillionMailTransportFactoryTest extends TestCase
     public function testCreatesStartTlsTransportWithConfiguredCredentialsAndSecureDefaults(): void
     {
         $transport = $this->factory()->create(Dsn::fromString(
-            'billionmail+smtp://mailer:secret@mail.example.test:587?auto_tls=true&max_per_second=4'
+            'billionmail+smtp://mailer:secret@mail.example.test:587?max_per_second=4&local_domain=wallza.example&source_ip=192.0.2.10&restart_threshold=50&restart_threshold_sleep=5&ping_threshold=30'
         ));
 
         $this->assertInstanceOf(EsmtpTransport::class, $transport);
         $this->assertSame('mailer', $transport->getUsername());
         $this->assertSame('secret', $transport->getPassword());
         $this->assertTrue($transport->isTlsRequired());
+        $this->assertTrue($transport->isAutoTls());
+        $this->assertSame('wallza.example', $transport->getLocalDomain());
 
         $stream = $transport->getStream();
         $this->assertInstanceOf(SocketStream::class, $stream);
         $this->assertSame('mail.example.test', $stream->getHost());
         $this->assertSame(587, $stream->getPort());
+        $this->assertFalse($stream->isTLS());
+        $this->assertSame('192.0.2.10', $stream->getSourceIp());
     }
 
     public function testSmtpsSchemeCreatesImplicitTlsTransport(): void
