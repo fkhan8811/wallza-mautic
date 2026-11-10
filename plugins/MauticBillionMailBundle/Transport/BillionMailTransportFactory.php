@@ -24,7 +24,7 @@ final class BillionMailTransportFactory extends AbstractTransportFactory
     public function create(Dsn $dsn): TransportInterface
     {
         if (!$this->supports($dsn)) {
-            throw new UnsupportedSchemeException($dsn, 'billionmail+smtp or billionmail+smtps', $this->getSupportedSchemes());
+            throw new UnsupportedSchemeException($dsn, 'BillionMail', $this->getSupportedSchemes());
         }
 
         $scheme = $dsn->getScheme();
