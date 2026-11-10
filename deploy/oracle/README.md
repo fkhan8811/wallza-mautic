@@ -46,6 +46,8 @@ The file and directory are created with restrictive permissions. The script refu
 
 The web container binds to `127.0.0.1` only. It is not publicly reachable by default. Configure your host reverse proxy to route the tenant's HTTPS hostname to its assigned local port. Do not expose MariaDB or the web port directly to the public internet.
 
+A sample Caddy site is provided at `deploy/oracle/Caddyfile.example`. For the `pilot` example, replace `mautic.example.com` with the tenant hostname and keep `127.0.0.1:8080` as the upstream. Caddy can then terminate HTTPS and proxy to the loopback-only Mautic port. For a proxy running in a container, do not assume it can reach the host's loopback address; configure an explicit private network/host-gateway route and keep the Mautic port firewalled from public ingress.
+
 After the first boot, open the tenant through the reverse proxy and complete Mautic's installer. The tenant has its own admin account and own Mautic database. Create a server-side API credential for WallzaOS and keep it in the WallzaOS backend secret store.
 
 After the installer has created the Mautic database, reload plugins and clear the application cache:
