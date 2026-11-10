@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MauticPlugin\MauticBillionMailBundle\Tests\Unit\Transport;
 
+use Mautic\CoreBundle\Helper\Dsn\Dsn as MauticDsn;
+use Mautic\EmailBundle\DependencyInjection\EnvProcessor\MailerDsnEnvVarProcessor;
 use MauticPlugin\MauticBillionMailBundle\Transport\BillionMailTransportFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
