@@ -12,7 +12,7 @@ use MauticPlugin\MauticWallzaIdentityBundle\Security\WallzaSsoAssertionVerifier;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -213,7 +213,7 @@ final readonly class WallzaSsoSubscriber implements EventSubscriberInterface
         if ($event->isLoginCheck()) {
             $event->getRequest()->getSession()->set(
                 SecurityRequestAttributes::AUTHENTICATION_ERROR,
-                new AuthenticationException($message)
+                new CustomUserMessageAuthenticationException($message)
             );
             $event->setResponse(new RedirectResponse($this->router->generate('login')));
         }
