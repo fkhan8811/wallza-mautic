@@ -142,6 +142,24 @@ if [[ -e "$TENANT_ENV_FILE" ]]; then
   exit 3
 fi
 
+# A port belongs to a tenant for as long as its private env file exists, even
+# when that tenant's containers are stopped. Checking only listening sockets
+# would allow two stopped/running stacks to be assigned the same localhost port.
+while IFS= read -r -d '' existing_env; do
+  [[ "$existing_env" == "$TENANT_ENV_FILE" ]] && continue
+
+  existing_port="$(sed -n 's/^MAUTIC_HTTP_PORT=//p' "$existing_env" | head -n 1)"
+  [[ "$existing_port" =~ ^[0-9]{1,5}$ ]] || continue
+  existing_port=$((10#$existing_port))
+
+  if (( existing_port == HTTP_PORT )); then
+    existing_slug="$(basename "$(dirname "$existing_env")")"
+    echo "Host port $HTTP_PORT is already assigned to tenant '$existing_slug'." >&2
+    echo "Stop and explicitly reassign that tenant before reusing its port." >&2
+    exit 3
+  fi
+done < <(find "$TENANTS_DIR" -mindepth 2 -maxdepth 2 -type f -name .env -print0 2>/dev/null)
+
 # A deleted env file must not allow a new set of passwords to be generated
 # for an old Compose project that still contains customer data/volumes.
 existing_resources="$(
