@@ -47,6 +47,7 @@
 - [x] Add a Mailpit-backed SMTP integration test that sends a real Symfony message through the BillionMail transport and verifies it appears in the SMTP sink.
 - [x] Extend dedicated CI to build the pinned Oracle image, verify plugin autoload and PHP IMAP, exercise provisioner safety, and validate Compose/cron configuration.
 - [x] Extend API-library CI to reload the local Mautic plugins, rebuild the cache/container and verify the BillionMail transport factory registration.
+- [x] Serialize tenant provisioning by slug and host port with atomic locks; smoke tests cover busy tenant/port locks, secret overwrite, orphan Compose resources and invalid ports.
 - [ ] Obtain successful CI results for the new SMTP sink, container-discovery and Oracle smoke checks.
 - [ ] Pass the Mailpit-backed plugin PHPUnit/integration run and complete the current full Mautic CI matrix.
 - [ ] Pass the automated real-Mautic plugin reload/container compile check and the pinned Oracle image autoload check.
