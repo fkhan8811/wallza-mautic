@@ -66,6 +66,34 @@ PROJECT_NAME="wallza-mautic-$TENANT_SLUG"
 TENANT_ENV_DIR="$TENANTS_DIR/$TENANT_SLUG"
 TENANT_ENV_FILE="$TENANT_ENV_DIR/.env"
 
+# Serialize tenant and host-port provisioning. mkdir is atomic on the local
+# filesystem, so two simultaneous requests cannot race while generating DB
+# credentials or creating Compose resources for the same tenant/port.
+umask 077
+LOCK_ROOT="$TENANTS_DIR/.provisioning-locks"
+TENANT_LOCK="$LOCK_ROOT/tenant-$TENANT_SLUG.lock"
+PORT_LOCK="$LOCK_ROOT/port-$HTTP_PORT.lock"
+mkdir -p "$LOCK_ROOT"
+chmod 700 "$TENANTS_DIR" "$LOCK_ROOT"
+
+if ! mkdir "$TENANT_LOCK" 2>/dev/null; then
+  echo "Tenant '$TENANT_SLUG' is already being provisioned by another process." >&2
+  echo "Check for an active provisioner or a stale lock at '$TENANT_LOCK'." >&2
+  exit 3
+fi
+
+if ! mkdir "$PORT_LOCK" 2>/dev/null; then
+  rmdir "$TENANT_LOCK" 2>/dev/null || true
+  echo "Host port $HTTP_PORT is already reserved by another tenant provisioner." >&2
+  echo "Check for an active provisioner or a stale lock at '$PORT_LOCK'." >&2
+  exit 3
+fi
+
+cleanup_locks() {
+  rmdir "$PORT_LOCK" "$TENANT_LOCK" 2>/dev/null || true
+}
+trap cleanup_locks EXIT
+
 if [[ -e "$TENANT_ENV_FILE" ]]; then
   echo "Tenant env already exists: $TENANT_ENV_FILE" >&2
   echo "Refusing to overwrite secrets or replace an existing tenant stack." >&2
