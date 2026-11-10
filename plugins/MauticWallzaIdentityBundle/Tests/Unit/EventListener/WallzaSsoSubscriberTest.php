@@ -290,6 +290,7 @@ final class WallzaSsoSubscriberTest extends TestCase
             self::TOKEN_URL,
             self::TENANT,
             self::BASE_URL,
+            self::ISSUER,
             self::SECRET
         );
     }
