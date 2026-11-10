@@ -149,8 +149,19 @@ while IFS= read -r -d '' existing_env; do
   [[ "$existing_env" == "$TENANT_ENV_FILE" ]] && continue
 
   existing_port="$(sed -n 's/^MAUTIC_HTTP_PORT=//p' "$existing_env" | head -n 1)"
-  [[ "$existing_port" =~ ^[0-9]{1,5}$ ]] || continue
+  if [[ ! "$existing_port" =~ ^[0-9]{1,5}$ ]]; then
+    existing_slug="$(basename "$(dirname "$existing_env")")"
+    echo "Cannot safely determine the reserved port for tenant '$existing_slug'." >&2
+    echo "Repair that tenant's private MAUTIC_HTTP_PORT value before provisioning another stack." >&2
+    exit 3
+  fi
   existing_port=$((10#$existing_port))
+  if (( existing_port < 1024 || existing_port > 65535 )); then
+    existing_slug="$(basename "$(dirname "$existing_env")")"
+    echo "Tenant '$existing_slug' has an invalid reserved host port." >&2
+    echo "Repair that tenant's private MAUTIC_HTTP_PORT value before provisioning another stack." >&2
+    exit 3
+  fi
 
   if (( existing_port == HTTP_PORT )); then
     existing_slug="$(basename "$(dirname "$existing_env")")"
