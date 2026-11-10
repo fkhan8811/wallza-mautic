@@ -16,8 +16,8 @@ final class MauticBillionMailExtensionTest extends TestCase
         $container = new ContainerBuilder();
         (new MauticBillionMailExtension())->load([], $container);
 
-        self::assertTrue($container->hasDefinition(BillionMailTransportFactory::class));
-        self::assertArrayHasKey(
+        $this->assertTrue($container->hasDefinition(BillionMailTransportFactory::class));
+        $this->assertArrayHasKey(
             'mailer.transport_factory',
             $container->getDefinition(BillionMailTransportFactory::class)->getTags()
         );
