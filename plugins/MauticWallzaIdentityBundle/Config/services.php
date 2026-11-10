@@ -22,15 +22,15 @@ return function (ContainerConfigurator $configurator): void {
     $services->alias('mautic.integration.wallza', WallzaIntegration::class);
 
     $services->set(WallzaSsoAssertionVerifier::class)
-        ->arg('$secret', '%env(default:wallza_sso_hmac_secret:WALLZA_SSO_HMAC_SECRET)%')
-        ->arg('$issuer', '%env(default:wallza_sso_issuer:WALLZA_SSO_ISSUER)%')
-        ->arg('$tenantId', '%env(default:wallza_sso_tenant_id:WALLZA_MAUTIC_TENANT_ID)%');
+        ->arg('$secret', '%env(default:mautic.wallza_sso_hmac_secret:WALLZA_SSO_HMAC_SECRET)%')
+        ->arg('$issuer', '%env(default:mautic.wallza_sso_issuer:WALLZA_SSO_ISSUER)%')
+        ->arg('$tenantId', '%env(default:mautic.wallza_sso_tenant_id:WALLZA_MAUTIC_TENANT_ID)%');
 
     $services->set(WallzaSsoSubscriber::class)
-        ->arg('$authorizeUrl', '%env(default:wallza_sso_authorize_url:WALLZA_SSO_AUTHORIZE_URL)%')
-        ->arg('$tokenUrl', '%env(default:wallza_sso_token_url:WALLZA_SSO_TOKEN_URL)%')
-        ->arg('$tenantId', '%env(default:wallza_sso_tenant_id:WALLZA_MAUTIC_TENANT_ID)%')
-        ->arg('$baseUrl', '%env(default:wallza_sso_base_url:WALLZA_MAUTIC_BASE_URL)%')
-        ->arg('$issuer', '%env(default:wallza_sso_issuer:WALLZA_SSO_ISSUER)%')
-        ->arg('$hmacSecret', '%env(default:wallza_sso_hmac_secret:WALLZA_SSO_HMAC_SECRET)%');
+        ->arg('$authorizeUrl', '%env(default:mautic.wallza_sso_authorize_url:WALLZA_SSO_AUTHORIZE_URL)%')
+        ->arg('$tokenUrl', '%env(default:mautic.wallza_sso_token_url:WALLZA_SSO_TOKEN_URL)%')
+        ->arg('$tenantId', '%env(default:mautic.wallza_sso_tenant_id:WALLZA_MAUTIC_TENANT_ID)%')
+        ->arg('$baseUrl', '%env(default:mautic.wallza_sso_base_url:WALLZA_MAUTIC_BASE_URL)%')
+        ->arg('$issuer', '%env(default:mautic.wallza_sso_issuer:WALLZA_SSO_ISSUER)%')
+        ->arg('$hmacSecret', '%env(default:mautic.wallza_sso_hmac_secret:WALLZA_SSO_HMAC_SECRET)%');
 };
