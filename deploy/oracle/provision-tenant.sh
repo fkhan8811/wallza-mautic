@@ -87,7 +87,7 @@ if (( HTTP_PORT < 1024 || HTTP_PORT > 65535 )); then
   exit 2
 fi
 
-for command in docker openssl; do
+for command in docker openssl ss; do
   if ! command -v "$command" >/dev/null 2>&1; then
     echo "Required command not found: $command" >&2
     exit 2
@@ -99,7 +99,7 @@ if ! docker compose version >/dev/null 2>&1; then
   exit 2
 fi
 
-if command -v ss >/dev/null 2>&1 && ss -H -ltn "sport = :$HTTP_PORT" | grep -q .; then
+if ss -H -ltn "sport = :$HTTP_PORT" | grep -q .; then
   echo "Port $HTTP_PORT is already listening on this host." >&2
   exit 2
 fi
