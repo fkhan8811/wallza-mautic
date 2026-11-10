@@ -93,6 +93,11 @@ jobs:
       - name: Lint plugin PHP files
         run: find plugins/MauticBillionMailBundle plugins/MauticWallzaIdentityBundle -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l
 
+      - name: Verify pinned base image supports Oracle amd64 and Ampere arm64
+        run: |
+          docker buildx imagetools inspect --raw "mautic/mautic:7.2.2-20261026-apache@sha256:83461b9ec7c109413281490180e1f96c379aa935bd92f80c68294f98487a9015" \
+            | jq -e '[.manifests[].platform | "\(.os)/\(.architecture)"] | index("linux/amd64") != null and index("linux/arm64") != null' >/dev/null
+
       - name: Build pinned Oracle Mautic image
         run: docker build --pull --file deploy/oracle/Dockerfile --tag wallzaos/mautic:ci .
 
