@@ -49,10 +49,27 @@ jobs:
       - name: Build pinned Oracle Mautic image
         run: docker build --pull --file deploy/oracle/Dockerfile --tag wallzaos/mautic:ci .
 
-      - name: Verify runtime plugin location and IMAP extension
+      - name: Verify runtime plugin location, autoloading and IMAP extension
         run: |
-          docker run --rm --entrypoint sh wallzaos/mautic:ci -lc 'test -f /var/www/html/docroot/plugins/MauticBillionMailBundle/MauticBillionMailBundle.php'
-          docker run --rm --entrypoint php wallzaos/mautic:ci -r 'if (!extension_loaded("imap")) { fwrite(STDERR, "PHP IMAP extension is required for monitored-email processing.\\n"); exit(1); }'
+          docker run --rm --entrypoint php wallzaos/mautic:ci -r '
+            require "/var/www/html/vendor/autoload.php";
+            $classes = [
+              "MauticPlugin\\\\MauticBillionMailBundle\\\\MauticBillionMailBundle",
+              "MauticPlugin\\\\MauticBillionMailBundle\\\\DependencyInjection\\\\MauticBillionMailExtension",
+              "MauticPlugin\\\\MauticBillionMailBundle\\\\Transport\\\\BillionMailTransportFactory",
+            ];
+            foreach ($classes as $class) {
+              if (!class_exists($class)) {
+                fwrite(STDERR, "Runtime autoload failed: ".$class.PHP_EOL);
+                exit(1);
+              }
+            }
+            if (!extension_loaded("imap")) {
+              fwrite(STDERR, "PHP IMAP extension is required for monitored-email processing.".PHP_EOL);
+              exit(1);
+            }
+            echo "BillionMail plugin autoload and PHP IMAP checks passed.".PHP_EOL;
+          '
 
       - name: Validate Oracle Compose and tenant provisioner
         run: |
