@@ -99,7 +99,7 @@ final readonly class WallzaSsoAssertionVerifier
     {
         try {
             $decoded  = json_decode($this->decodeBase64Url($part), true, 16, JSON_THROW_ON_ERROR);
-        } catch (\\JsonException $exception) {
+        } catch (\JsonException $exception) {
             throw new \RuntimeException('Wallza SSO assertion contains invalid JSON.', 0, $exception);
         }
 
