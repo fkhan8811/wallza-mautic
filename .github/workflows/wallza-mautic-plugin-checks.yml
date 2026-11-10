@@ -49,4 +49,7 @@ jobs:
       - name: Validate Oracle Compose and tenant provisioner
         run: |
           bash -n deploy/oracle/provision-tenant.sh
+          test -s deploy/oracle/mautic-cron
+          grep -F 'mautic:email:fetch --message-limit=100' deploy/oracle/mautic-cron
+          grep -F 'DOCKER_MAUTIC_ROLE: mautic_web' deploy/oracle/compose.yaml
           docker compose --env-file deploy/oracle/.env.example -f deploy/oracle/compose.yaml config --quiet
