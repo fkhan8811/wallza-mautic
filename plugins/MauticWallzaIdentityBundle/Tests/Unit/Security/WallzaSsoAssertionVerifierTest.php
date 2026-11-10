@@ -22,9 +22,9 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
 
         $claims = $this->verifier()->verify($assertion, self::STATE, self::NOW);
 
-        self::assertSame('6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba', $claims['sub']);
-        self::assertSame('faisal@example.test', $claims['email']);
-        self::assertSame(self::TENANT, $claims['tenant_id']);
+        $this->assertSame('6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba', $claims['sub']);
+        $this->assertSame('faisal@example.test', $claims['email']);
+        $this->assertSame(self::TENANT, $claims['tenant_id']);
     }
 
     public function testRejectsAnInvalidSignature(): void
