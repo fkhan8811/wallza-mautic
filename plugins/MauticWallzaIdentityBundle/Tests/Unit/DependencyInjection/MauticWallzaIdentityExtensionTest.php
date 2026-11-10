@@ -27,6 +27,46 @@ final class MauticWallzaIdentityExtensionTest extends TestCase
             WallzaIntegration::class,
             (string) $container->getAlias('mautic.integration.wallza')
         );
+
+        $subscriber = $container->getDefinition(WallzaSsoSubscriber::class);
+        self::assertSame(
+            '%env(default:mautic.wallza_sso_authorize_url:WALLZA_SSO_AUTHORIZE_URL)%',
+            $subscriber->getArgument('$authorizeUrl')
+        );
+        self::assertSame(
+            '%env(default:mautic.wallza_sso_token_url:WALLZA_SSO_TOKEN_URL)%',
+            $subscriber->getArgument('$tokenUrl')
+        );
+        self::assertSame(
+            '%env(default:mautic.wallza_sso_tenant_id:WALLZA_MAUTIC_TENANT_ID)%',
+            $subscriber->getArgument('$tenantId')
+        );
+        self::assertSame(
+            '%env(default:mautic.wallza_sso_base_url:WALLZA_MAUTIC_BASE_URL)%',
+            $subscriber->getArgument('$baseUrl')
+        );
+        self::assertSame(
+            '%env(default:mautic.wallza_sso_issuer:WALLZA_SSO_ISSUER)%',
+            $subscriber->getArgument('$issuer')
+        );
+        self::assertSame(
+            '%env(default:mautic.wallza_sso_hmac_secret:WALLZA_SSO_HMAC_SECRET)%',
+            $subscriber->getArgument('$hmacSecret')
+        );
+
+        $verifier = $container->getDefinition(WallzaSsoAssertionVerifier::class);
+        self::assertSame(
+            '%env(default:mautic.wallza_sso_hmac_secret:WALLZA_SSO_HMAC_SECRET)%',
+            $verifier->getArgument('$secret')
+        );
+        self::assertSame(
+            '%env(default:mautic.wallza_sso_issuer:WALLZA_SSO_ISSUER)%',
+            $verifier->getArgument('$issuer')
+        );
+        self::assertSame(
+            '%env(default:mautic.wallza_sso_tenant_id:WALLZA_MAUTIC_TENANT_ID)%',
+            $verifier->getArgument('$tenantId')
+        );
     }
 
     public function testWallzaIntegrationAdvertisesMauticSsoServiceFeature(): void
