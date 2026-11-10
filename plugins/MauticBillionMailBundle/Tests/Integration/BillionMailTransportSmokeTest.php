@@ -19,7 +19,7 @@ final class BillionMailTransportSmokeTest extends TestCase
     {
         $dsn = getenv('WALLZA_BILLIONMAIL_TEST_DSN');
         if (false === $dsn || '' === $dsn) {
-            self::markTestSkipped('Set WALLZA_BILLIONMAIL_TEST_DSN to run the SMTP sink integration test.');
+            $this->markTestSkipped('Set WALLZA_BILLIONMAIL_TEST_DSN to run the SMTP sink integration test.');
         }
 
         $factory = new BillionMailTransportFactory(new EventDispatcher(), null, new NullLogger());
@@ -34,6 +34,6 @@ final class BillionMailTransportSmokeTest extends TestCase
                 ->text('The BillionMail SMTP transport delivered this test message.')
         );
 
-        self::assertNotNull($sentMessage, 'The SMTP transport should return a sent-message result.');
+        $this->assertNotNull($sentMessage, 'The SMTP transport should return a sent-message result.');
     }
 }
