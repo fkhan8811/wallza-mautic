@@ -22,7 +22,7 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
 
         $claims = $this->verifier()->verify($assertion, self::STATE, self::NOW);
 
-        self::assertSame('supabase-user-123', $claims['sub']);
+        self::assertSame('6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba', $claims['sub']);
         self::assertSame('faisal@example.test', $claims['email']);
         self::assertSame(self::TENANT, $claims['tenant_id']);
     }
@@ -124,7 +124,7 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
             'iss'            => self::ISSUER,
             'aud'            => self::TENANT,
             'tenant_id'      => self::TENANT,
-            'sub'            => 'supabase-user-123',
+            'sub'            => '6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba',
             'email'          => 'faisal@example.test',
             'email_verified' => true,
             'first_name'     => 'Faisal',
