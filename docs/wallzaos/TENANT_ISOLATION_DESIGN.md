@@ -17,7 +17,7 @@ For the first WallzaOS rollout, do **not** run multiple organizations in one Mau
 The repeatable template is in `deploy/oracle/`:
 - The image is pinned to the official Mautic 7.2.2 Apache release and copies the BillionMail plugin into the official Docker plugin directory.
 - MariaDB is the only Mautic application database; Supabase PostgreSQL remains the WallzaOS control plane.
-- Web, cron and Messenger worker containers run separately within the tenant's stack.
+- Web, cron and Messenger worker containers run separately within the tenant's stack. The initial worker pool is capped at one consumer each for email, hit and failed queues to avoid the official image's six-process default overwhelming the 2-vCPU pilot host.
 - The Mautic web listener is bound to loopback and must sit behind the host HTTPS reverse proxy.
 - The tenant provisioner creates a unique Compose project, random DB credentials and separate named volumes/network for each tenant slug; it refuses to overwrite an existing tenant env file.
 
