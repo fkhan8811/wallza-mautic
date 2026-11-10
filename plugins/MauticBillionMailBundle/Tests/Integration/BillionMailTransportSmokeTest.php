@@ -34,6 +34,6 @@ final class BillionMailTransportSmokeTest extends TestCase
                 ->text('The BillionMail SMTP transport delivered this test message.')
         );
 
-        $this->assertNotNull($sentMessage, 'The SMTP transport should return a sent-message result.');
+        $this->assertInstanceOf(\Symfony\Component\Mailer\SentMessage::class, $sentMessage, 'The SMTP transport should return a sent-message result.');
     }
 }
