@@ -136,6 +136,22 @@ else
   [[ "$status" == "2" ]]
 fi
 
+# Non-HTTPS endpoints and query strings in the canonical Mautic base URL must be rejected before tenant resources are created.
+if WALLZA_SSO_AUTHORIZE_URL="http://auth.wallza.in/authorize" bash "$SCRIPT_DIR/provision-tenant.sh" invalid-auth 8085 "e48b9f6f-9c4c-4c3d-aeab-c6ed3f0ef999" > "$TMP_DIR/sso-url.log" 2>&1; then
+  echo "Expected non-HTTPS Wallza SSO URL to be rejected." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "2" ]]
+fi
+if WALLZA_MAUTIC_BASE_URL="https://mautic.example.test?next=unsafe" bash "$SCRIPT_DIR/provision-tenant.sh" invalid-base 8086 "e48b9f6f-9c4c-4c3d-aeab-c6ed3f0ef999" > "$TMP_DIR/base-url.log" 2>&1; then
+  echo "Expected query string in Mautic base URL to be rejected." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "2" ]]
+fi
+
 # Invalid public ports must be rejected before Docker is invoked.
 if bash "$SCRIPT_DIR/provision-tenant.sh" invalid-port 80 > "$TMP_DIR/port.log" 2>&1; then
   echo "Expected invalid port to be rejected." >&2
