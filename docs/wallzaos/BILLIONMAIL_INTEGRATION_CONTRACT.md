@@ -52,7 +52,29 @@ The connected `fkhan8811/Whatsapp` backend uses the following tenant/auth model 
 
 This is a reference contract for the WallzaOS integration layer, not proof that Mautic already enforces tenant boundaries. The Mautic plugin currently does not establish Supabase SSO, map Mautic users to organizations, or filter Mautic entities by organization. Do not expose a shared Mautic instance to multiple customer workspaces until that enforcement is implemented and tested across UI, API, CLI, Messenger workers, imports/exports and webhook delivery. In particular, do not pass a browser-supplied `organization_id` into a Mautic request and treat it as authorization.
 
-## 4. Native Mautic IMAP feedback path
+## 4. BillionMail SMTP and IMAP defaults verified in source
+
+The inspected BillionMail fork's `docker-compose.yml`, Postfix and Dovecot configuration establish these default host ports (the compose environment can override them):
+
+| Component | Default port | Configuration evidence |
+|---|---:|---|
+| Postfix SMTP | 25 | Server SMTP listener; global TLS setting is opportunistic |
+| Postfix submission | 587 | Submission listener enforces TLS (`smtpd_enforce_tls=yes`, `smtpd_tls_security_level=encrypt`) |
+| Postfix SMTPS | 465 | Listener uses TLS wrapper mode |
+| Dovecot IMAP | 143 | Default IMAP listener |
+| Dovecot IMAPS | 993 | Default IMAPS listener; Dovecot has `ssl=yes` |
+
+Postfix globally enables Dovecot-backed SASL authentication. The mailbox creation path forms the username as `localpart@domain`; Mautic must use the mailbox's actual password, not a database/service password. URL-encode the `@` in the username as `%40` in the DSN and URL-encode reserved password characters.
+
+Recommended Mautic settings:
+- SMTP hostname: the deployed `BILLIONMAIL_HOSTNAME`.
+- STARTTLS: port 587, `billionmail+smtp`, `auto_tls=true`, `require_tls=true`.
+- Implicit TLS: port 465, `billionmail+smtps`, `require_tls=true`.
+- Monitored-email IMAP: port 993, SSL/TLS enabled (Mautic's `/ssl` option), full-address mailbox username.
+
+Port 25 is not the authenticated mailbox submission endpoint. Prefer 587 or 465 for Mautic.
+
+## 6. Native Mautic IMAP feedback path
 
 Mautic 7.2.2 already has a monitored IMAP inbox processor:
 
@@ -81,7 +103,7 @@ WallzaOS should normalize delivery provider events into a stable internal event 
 
 Never trust a client-supplied tenant identifier as proof of tenant ownership.
 
-## 6. Suppression policy
+## 7. Suppression policy
 
 - Unsubscribe, hard bounce and complaint events must update a central suppression decision before future marketing sends.
 - Suppression is scoped by tenant and channel, with an explicit global block policy only where legally and operationally appropriate.
@@ -92,7 +114,7 @@ Never trust a client-supplied tenant identifier as proof of tenant ownership.
 
 This policy is a requirement, not a completed feature in the current branch.
 
-## 7. Required tests
+## 8. Required tests
 
 - Plugin discovery and service-container compilation.
 - SMTP authentication and TLS negotiation against the deployed BillionMail endpoint.
@@ -106,7 +128,7 @@ This policy is a requirement, not a completed feature in the current branch.
 - Tenant A events cannot mutate Tenant B recipient status.
 - Transient SMTP failure retry and permanent SMTP failure handling.
 
-## 8. Render deployment inspection
+## 9. Render deployment inspection
 
 The connected Render `My Workspace` was inspected. It currently contains the production Node service `Whatsapp` and the Node staging service `wallza-connect-staging`, both backed by the `fkhan8811/Whatsapp` repository. No Mautic service or Wallza Mautic database is present in that workspace. The only listed Render PostgreSQL database belongs to Seasons of Lawn and is suspended; it must not be reused for Mautic.
 
@@ -114,11 +136,11 @@ The production WhatsApp service is live, on its `main` branch, Singapore region 
 
 Mautic deployment must be validated on its actual target (the planned Oracle host or a separately provisioned service). The WhatsApp Node service and Supabase PostgreSQL are not substitutes for Mautic's MySQL/MariaDB application database.
 
-## 9. Deployment dependency
+## 10. Deployment dependency
 
 Mautic 7.2.2's database configuration uses MySQL/MariaDB. WallzaOS's Supabase PostgreSQL remains separate for SaaS control-plane data. Do not point Mautic's Doctrine database at Supabase PostgreSQL.
 
-## 10. Remaining inputs and blockers
+## 11. Remaining inputs and blockers
 
 - Actual deployed BillionMail SMTP mailbox/submission hostname, port, TLS mode and credentials (credentials must never be committed to Git or exposed to browsers).
 - A supported BillionMail provider delivery-event/webhook contract, including signature verification rules, if available in the deployed version.
