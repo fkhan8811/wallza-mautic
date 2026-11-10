@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace MauticPlugin\MauticWallzaIdentityBundle\Security;
 
-use JsonException;
-use RuntimeException;
-
 final readonly class WallzaSsoAssertionVerifier
 {
     public function __construct(
@@ -30,7 +27,7 @@ final readonly class WallzaSsoAssertionVerifier
             || 1 !== preg_match('/\\A[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\\z/i', $this->tenantId)
             || '' === $this->issuer
         ) {
-            throw new RuntimeException('Wallza SSO is not configured.');
+            throw new \\RuntimeException('Wallza SSO is not configured.');
         }
 
         if (strlen($assertion) > 8192) {
@@ -42,8 +39,8 @@ final readonly class WallzaSsoAssertionVerifier
             throw new RuntimeException('Wallza SSO assertion is malformed.');
         }
 
-        $header  = $this->decodeJsonPart($parts[0]);
-        $payload = $this->decodeJsonPart($parts[1]);
+        $header    = $this->decodeJsonPart($parts[0]);
+        $payload   = $this->decodeJsonPart($parts[1]);
         $signature = $this->decodeBase64Url($parts[2]);
 
         if ('HS256' !== ($header['alg'] ?? null) || !is_string($header['typ'] ?? null) || 'JWT' !== $header['typ']) {
@@ -101,8 +98,8 @@ final readonly class WallzaSsoAssertionVerifier
     private function decodeJsonPart(string $part): array
     {
         try {
-            $decoded = json_decode($this->decodeBase64Url($part), true, 16, JSON_THROW_ON_ERROR);
-        } catch (JsonException $exception) {
+            $decoded  = json_decode($this->decodeBase64Url($part), true, 16, JSON_THROW_ON_ERROR);
+        } catch (\\JsonException $exception) {
             throw new RuntimeException('Wallza SSO assertion contains invalid JSON.', 0, $exception);
         }
 
