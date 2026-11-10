@@ -58,14 +58,14 @@ docker compose \
   --project-name wallza-mautic-pilot \
   --env-file ~/.config/wallzaos-mautic/tenants/pilot/.env \
   -f deploy/oracle/compose.yaml \
-  exec mautic_web php bin/console mautic:plugins:reload
+  exec --user www-data --workdir /var/www/html mautic_web php bin/console mautic:plugins:reload
 
 docker compose \
   --project-directory deploy/oracle \
   --project-name wallza-mautic-pilot \
   --env-file ~/.config/wallzaos-mautic/tenants/pilot/.env \
   -f deploy/oracle/compose.yaml \
-  exec mautic_web php bin/console cache:clear
+  exec --user www-data --workdir /var/www/html mautic_web php bin/console cache:clear
 ```
 
 Replace `pilot` with the tenant's actual slug. These commands are tenant-local; run them only after Mautic's installer completes and before configuring the custom transport.
