@@ -75,16 +75,27 @@ In each tenant's Mautic **Settings → Configuration → Email Settings**, set t
 STARTTLS pattern:
 
 ```text
-billionmail+smtp://MAILBOX_USER:URL_ENCODED_PASSWORD@mail.example.com:587?auto_tls=true&require_tls=true
+billionmail+smtp://URL_ENCODED_MAILBOX_USER:URL_ENCODED_PASSWORD@mail.example.com:587?auto_tls=true&require_tls=true
 ```
 
 Implicit TLS pattern:
 
 ```text
-billionmail+smtps://MAILBOX_USER:URL_ENCODED_PASSWORD@mail.example.com:465?require_tls=true
+billionmail+smtps://URL_ENCODED_MAILBOX_USER:URL_ENCODED_PASSWORD@mail.example.com:465?require_tls=true
 ```
 
-These are examples only. Do not assume BillionMail uses these hostnames or ports; use the values from the deployed mailbox configuration. TLS is required by default and certificate verification remains enabled.
+BillionMail's inspected fork uses the following default ports (the Compose environment can override the host-side ports):
+
+| Service | Default port | Mautic usage |
+|---|---:|---|
+| SMTP submission | 587 | Recommended; STARTTLS is enforced |
+| SMTPS | 465 | Alternative; implicit TLS |
+| SMTP | 25 | Server-to-server; not the mailbox submission port |
+| IMAPS | 993 | Recommended for monitored-email folders |
+
+The mailbox username is its full address, such as `marketing@example.com`. URL-encode `@` as `%40` in the DSN username and URL-encode reserved password characters. Use your deployed `BILLIONMAIL_HOSTNAME`, the actual mailbox password and the valid TLS certificate for that hostname. These are source-verified defaults, not a guarantee that your deployment has not overridden them.
+
+TLS is required by default and certificate verification remains enabled.
 
 ### Optional SMTP sink test
 
@@ -109,7 +120,7 @@ Open the Mailpit inbox at `http://127.0.0.1:8025` on the server or through a tru
 
 ## Bounce and unsubscribe ingestion
 
-Configure each tenant's BillionMail IMAP mailbox in **Settings → Configuration → Email Settings → Monitored Inbox Settings**. Point the Bounces and optional Unsubscribe Requests folders at folders that actually receive those messages. Then schedule Mautic's native `mautic:email:fetch` command through the tenant's cron process.
+Configure each tenant's BillionMail IMAP mailbox in **Settings → Configuration → Email Settings → Monitored Inbox Settings** using the deployed host, port `993`, SSL/TLS (`/ssl`), full mailbox address and mailbox password. Point the Bounces and optional Unsubscribe Requests folders at folders that actually receive those messages. Then schedule Mautic's native `mautic:email:fetch` command through the tenant's cron process.
 
 This uses Mautic's native IMAP feedback handling. It is not a BillionMail webhook and depends on BillionMail routing feedback messages into the configured folders.
 
