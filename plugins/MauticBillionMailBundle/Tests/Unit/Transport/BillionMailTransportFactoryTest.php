@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Mailer\Transport\Dsn;
+use Symfony\Component\Mailer\Exception\UnsupportedSchemeException;
 use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 use Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream;
 
@@ -48,6 +49,12 @@ final class BillionMailTransportFactoryTest extends TestCase
         $this->assertTrue($factory->supports(Dsn::fromString('billionmail+smtp://mailer:secret@mail.example.test:587')));
         $this->assertTrue($factory->supports(Dsn::fromString('billionmail+smtps://mailer:secret@mail.example.test:465')));
         $this->assertFalse($factory->supports(Dsn::fromString('smtp://mailer:secret@mail.example.test:587')));
+    }
+
+    public function testRejectsUnsupportedTransportSchemes(): void
+    {
+        $this->expectException(UnsupportedSchemeException::class);
+        $this->factory()->create(Dsn::fromString('smtp://mailer:secret@mail.example.test:587'));
     }
 
     public function testCreatesStartTlsTransportWithConfiguredCredentialsAndSecureDefaults(): void
