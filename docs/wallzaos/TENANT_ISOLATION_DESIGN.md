@@ -19,7 +19,7 @@ The repeatable template is in `deploy/oracle/`:
 - MariaDB is the only Mautic application database; Supabase PostgreSQL remains the WallzaOS control plane.
 - Web, cron and Messenger worker containers run separately within the tenant's stack. The initial worker pool is capped at one consumer each for email, hit and failed queues to avoid the official image's six-process default overwhelming the 2-vCPU pilot host.
 - The Mautic web listener is bound to loopback and must sit behind the host HTTPS reverse proxy.
-- The tenant provisioner creates a unique Compose project, random DB credentials and separate named volumes/network for each tenant slug; it refuses to overwrite an existing tenant env file.
+- The tenant provisioner creates a unique Compose project, random DB credentials and separate named volumes/network for each tenant slug; it refuses to overwrite an existing tenant env file and uses atomic locks to prevent simultaneous provisioning for the same slug or host port.
 
 This template is a manual data-plane isolation mechanism, not the finished SaaS control plane. It has not yet been deployed on the Oracle host, load-tested alongside the other WallzaOS services, or wired to Supabase self-service provisioning. The safe initial policy is one stack per authorized organization and no shared Mautic DB.
 ## 3. WallzaOS identity and tenant mapping
