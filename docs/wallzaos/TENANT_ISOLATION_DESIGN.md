@@ -91,7 +91,7 @@ For tenant-owned records, define the tenant key, uniqueness scope, indexes, fore
 2. Keep customer data separated using one Mautic stack/database per organization for the initial rollout.
 3. Implement a protected server-side tenant registry mapping authenticated organizations to Mautic URLs and API credentials.
 4. Implement the matching WallzaOS authorization-code/token endpoints; require active membership both when issuing and consuming a one-time code.
-5. Provision tenant-local Mautic users with `username` equal to the immutable Supabase UUID (`sub`), and the same verified email; keep local Mautic roles under tenant-admin control.
+5. Provision tenant-local Mautic users with `POST /api/v2/users` using a tenant-scoped OAuth2 token with `user:users:create`; set `username` equal to the immutable Supabase UUID (`sub`), use the same verified email, provide a server-generated random `plainPassword`, and assign a pre-created least-privilege tenant-local role via its role IRI. Mautic's `UserProcessor` hashes the password. Never expose/log the initial password or change the stable username; keep local Mautic roles under tenant-admin control.
 6. Implement subscription/quota checks and automated tenant lifecycle.
 7. Propagate the authorized tenant mapping through WallzaOS jobs, retries and webhook workflows.
 8. Add negative tests proving one organization cannot resolve or call another organization's Mautic stack.
