@@ -28,7 +28,9 @@ final class BillionMailTransportFactory extends AbstractTransportFactory
         }
 
         $scheme = $dsn->getScheme();
-        $autoTls = filter_var($dsn->getOption('auto_tls', true), FILTER_VALIDATE_BOOL);
+        // SMTPS is encrypted from connect(); STARTTLS is only for the smtp scheme.
+        $autoTls = 'billionmail+smtp' === $scheme
+            && filter_var($dsn->getOption('auto_tls', true), FILTER_VALIDATE_BOOL);
         $tls = 'billionmail+smtps' === $scheme ? true : ($autoTls ? null : false);
         $defaultPort = 'billionmail+smtps' === $scheme ? 465 : 587;
         $port = $dsn->getPort($defaultPort) ?? $defaultPort;
