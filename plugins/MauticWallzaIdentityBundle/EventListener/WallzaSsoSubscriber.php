@@ -65,7 +65,7 @@ final readonly class WallzaSsoSubscriber implements EventSubscriberInterface
             }
 
             $this->completeLogin($event);
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             // Never log authorization codes, JWT assertions, or secret values.
             $this->logger->warning('Wallza SSO authentication failed.', ['exception' => $exception::class]);
             $this->fail($event);
