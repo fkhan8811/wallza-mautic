@@ -19,6 +19,21 @@ final class BillionMailTransportFactoryTest extends TestCase
         return new BillionMailTransportFactory(new EventDispatcher(), null, new NullLogger());
     }
 
+    public function testMauticMailerDsnEnvironmentProcessorAcceptsTheCustomScheme(): void
+    {
+        $dsn = 'billionmail+smtp://mailer:secret@mail.example.test:587?auto_tls=true&require_tls=true';
+        $processor = new MailerDsnEnvVarProcessor();
+
+        $processed = $processor->getEnv(
+            'mailer',
+            'MAUTIC_MAILER_DSN',
+            static fn (string $name): string => $dsn
+        );
+
+        self::assertSame($dsn, $processed);
+        self::assertSame('billionmail+smtp', MauticDsn::fromString($processed)->getScheme());
+    }
+
     public function testOnlyBillionMailSchemesAreSupported(): void
     {
         $factory = $this->factory();
