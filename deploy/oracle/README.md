@@ -190,7 +190,7 @@ The provisioning template enforces **data-plane isolation** by deploying a separ
 
 ## Resource limits and capacity
 
-The Compose file starts with conservative per-tenant caps (web 2 GB, database 2 GB, worker 768 MB, cron 512 MB; CPU caps total 1.5 vCPU). The initial worker pool is one consumer each for email, hit and failed queues; the official image otherwise defaults to two per queue (six total). Counts are configurable with `MAUTIC_WORKERS_CONSUME_EMAIL`, `MAUTIC_WORKERS_CONSUME_HIT` and `MAUTIC_WORKERS_CONSUME_FAILED`. These are initial limits, not measured capacity or a promise that the Oracle host can run multiple tenants alongside Supabase, BillionMail, Postiz and the other WallzaOS services.
+The Compose file starts with per-tenant caps (web 2 GB, database 2 GB, worker 1 GB, cron 512 MB; CPU caps total about 1.7 vCPU). The initial worker pool is one consumer each for email, hit and failed queues; the official image otherwise defaults to two per queue (six total). The worker container runs three separate PHP processes, each with a 256 MB PHP memory ceiling to leave container headroom. Counts are configurable with `MAUTIC_WORKERS_CONSUME_EMAIL`, `MAUTIC_WORKERS_CONSUME_HIT` and `MAUTIC_WORKERS_CONSUME_FAILED`. These are initial limits, not measured capacity or a promise that the Oracle host can run multiple tenants alongside Supabase, BillionMail, Postiz and the other WallzaOS services.
 
 Start with one pilot tenant. Measure host memory, CPU, database I/O, queue depth and delivery rate under realistic load before provisioning another tenant. Do not remove limits or increase the tenant count without capacity testing.
 
