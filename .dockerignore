@@ -1,0 +1,17 @@
+.git
+.github
+.ddev
+.idea
+.vscode
+node_modules
+vendor
+var/cache
+var/logs
+var/tmp
+tests/_output
+coverage*
+junit.xml
+*.log
+.env
+.env.*
+!.env.example
