@@ -72,6 +72,34 @@ grep -Fxq 'MAUTIC_WORKERS_CONSUME_FAILED=1' "$ENV_FILE"
 [[ "$(stat -c '%a' "$ENV_FILE")" == "600" ]]
 grep -Fq 'wallza-mautic-pilot' "$MOCK_DOCKER_CALL_LOG"
 
+LOCK_ROOT="$TENANTS_DIR/.provisioning-locks"
+[[ ! -e "$LOCK_ROOT/tenant-pilot.lock" ]]
+[[ ! -e "$LOCK_ROOT/port-8080.lock" ]]
+
+# A tenant lock prevents a second simultaneous provision request for the same slug.
+mkdir -p "$LOCK_ROOT/tenant-busy.lock"
+if bash "$SCRIPT_DIR/provision-tenant.sh" busy 8082 > "$TMP_DIR/tenant-lock.log" 2>&1; then
+  echo "Expected an active tenant lock to block concurrent provisioning." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "3" ]]
+fi
+[[ ! -e "$TENANTS_DIR/busy/.env" ]]
+rmdir "$LOCK_ROOT/tenant-busy.lock"
+
+# A port lock prevents two distinct tenants claiming the same localhost port.
+mkdir -p "$LOCK_ROOT/port-8083.lock"
+if bash "$SCRIPT_DIR/provision-tenant.sh" port-busy 8083 > "$TMP_DIR/port-lock.log" 2>&1; then
+  echo "Expected an active port lock to block concurrent provisioning." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "3" ]]
+fi
+[[ ! -e "$TENANTS_DIR/port-busy/.env" ]]
+rmdir "$LOCK_ROOT/port-8083.lock"
+
 # Existing tenant secrets must never be overwritten.
 if bash "$SCRIPT_DIR/provision-tenant.sh" pilot 8081 > "$TMP_DIR/overwrite.log" 2>&1; then
   echo "Expected existing tenant env to be protected from overwrite." >&2
