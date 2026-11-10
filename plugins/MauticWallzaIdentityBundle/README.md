@@ -23,7 +23,7 @@ The per-tenant Oracle provisioner generates `WALLZA_SSO_HMAC_SECRET` with `opens
 | `WALLZA_SSO_ISSUER` | Exact `iss` value the WallzaOS token service signs into assertions |
 | `WALLZA_SSO_HMAC_SECRET` | Per-tenant 256-bit secret shared only by this Mautic instance and the WallzaOS server |
 
-The plugin fails closed unless the tenant ID is a UUID, the secret is exactly 64 hexadecimal characters, and all three URLs use HTTPS with no embedded user credentials or URL fragment. It will not start an SSO flow with empty or placeholder settings.
+The plugin fails closed unless the tenant ID and Supabase subject are UUIDs, the secret is exactly 64 hexadecimal characters, and the authorization endpoint, token endpoint, canonical Mautic base URL and issuer use HTTPS with no embedded URL credentials or fragments. The base URL and issuer must not contain a query string. It will not start an SSO flow with empty or placeholder settings.
 
 After deploying an image containing this plugin, run `mautic:plugins:reload`, clear/warm the Mautic cache, then enable/publish **Wallza** under Mautic's Integrations settings. Mautic's integration helper exposes only installed and published integrations to the SSO login page.
 
@@ -122,6 +122,6 @@ The assertion is not a user-provisioning or role-assignment API.
 
 ## Tests and remaining dependency
 
-The plugin's PHPUnit tests cover valid assertion verification, invalid signature, wrong audience/tenant, wrong state, expired/overlong assertions, unverified email, unsupported algorithms, session-state redirect and callback mapping to an existing Mautic user.
+The plugin's PHPUnit tests cover valid assertion verification, invalid signature, wrong audience/tenant, wrong state, expired/overlong assertions, non-UUID subject, unverified email, unsupported algorithms, session-state redirect, missing/disabled local users, stable subject mapping and local-email mismatch.
 
 The Mautic-side implementation and contract are in this repository. The matching WallzaOS authorization-code and token endpoints are a separate backend change and are not yet implemented by this Mautic PR. Do not enable public SSO until both sides pass an end-to-end test with an actual Supabase session and a provisioned Mautic user.
