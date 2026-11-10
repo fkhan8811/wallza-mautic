@@ -114,6 +114,17 @@ else
 fi
 grep -Fxq 'MAUTIC_HTTP_PORT=8080' "$ENV_FILE"
 
+# A stopped tenant still reserves its configured port through its private env file.
+if bash "$SCRIPT_DIR/provision-tenant.sh" another-tenant 8080 > "$TMP_DIR/duplicate-port.log" 2>&1; then
+  echo "Expected a stopped tenant's configured port to remain reserved." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "3" ]]
+fi
+[[ ! -e "$TENANTS_DIR/another-tenant/.env" ]]
+grep -Fq "already assigned to tenant 'pilot'" "$TMP_DIR/duplicate-port.log"
+
 # If the env file is lost but Compose resources remain, provisioning must stop.
 rm "$ENV_FILE"
 export MOCK_DOCKER_RESOURCE_OUTPUT="orphaned-volume"
