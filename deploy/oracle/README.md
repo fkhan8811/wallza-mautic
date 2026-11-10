@@ -21,6 +21,7 @@ This is the isolation boundary for the initial SaaS rollout. A shared multi-tena
 ## Requirements
 
 - Docker Engine and Docker Compose v2.
+- `ss` from the host's `iproute2` package for listening-port conflict checks.
 - A host with enough CPU/RAM/disk for the current Mautic workload.
 - An HTTPS reverse proxy (Caddy or Nginx) to route each tenant hostname to its loopback port.
 - A separate BillionMail mailbox/submission credential set for each tenant.
