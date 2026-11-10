@@ -125,6 +125,22 @@ fi
 [[ ! -e "$TENANTS_DIR/another-tenant/.env" ]]
 grep -Fq "already assigned to tenant 'pilot'" "$TMP_DIR/duplicate-port.log"
 
+# An existing env file with an unknown port must fail closed rather than letting
+# Compose's default port be accidentally reused.
+mkdir -p "$TENANTS_DIR/legacy"
+printf 'COMPOSE_PROJECT_NAME=wallza-mautic-legacy\\n' > "$TENANTS_DIR/legacy/.env"
+chmod 600 "$TENANTS_DIR/legacy/.env"
+if bash "$SCRIPT_DIR/provision-tenant.sh" new-tenant 8088 > "$TMP_DIR/unknown-port.log" 2>&1; then
+  echo "Expected an existing tenant with an unknown port to block provisioning." >&2
+  exit 1
+else
+  status=$?
+  [[ "$status" == "3" ]]
+fi
+[[ ! -e "$TENANTS_DIR/new-tenant/.env" ]]
+grep -Fq "Cannot safely determine the reserved port for tenant 'legacy'" "$TMP_DIR/unknown-port.log"
+rm -rf "$TENANTS_DIR/legacy"
+
 # If the env file is lost but Compose resources remain, provisioning must stop.
 rm "$ENV_FILE"
 export MOCK_DOCKER_RESOURCE_OUTPUT="orphaned-volume"
