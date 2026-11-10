@@ -121,7 +121,10 @@ final class WallzaSsoSubscriberTest extends TestCase
         $router->method('generate')->willReturn('/s/sso_login_check/Wallza');
 
         $userRepository = $this->createMock(UserRepository::class);
-        $userRepository->expects(self::once())->method('findOneBy')->willReturn(null);
+        $userRepository->expects(self::once())
+            ->method('findOneBy')
+            ->with(['username' => '6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba'])
+            ->willReturn(null);
 
         $assertion = $this->createAssertion($state);
         $httpClient = new MockHttpClient(static fn (): MockResponse => new MockResponse(
@@ -132,6 +135,45 @@ final class WallzaSsoSubscriberTest extends TestCase
         $event = $this->createAuthenticationEvent($request, true);
         $subscriber = $this->subscriber($router, $httpClient, $userRepository);
 
+        $subscriber->onUserPreAuthentication($event);
+
+        self::assertFalse($event->isAuthenticated());
+        self::assertTrue($event->isFailed());
+        self::assertFalse($session->has('wallza.sso.state'));
+    }
+
+    public function testCallbackFailsClosedWhenTheProvisionedSubjectHasAnotherEmail(): void
+    {
+        $state = bin2hex(random_bytes(32));
+        $session = new Session(new MockArraySessionStorage());
+        $session->set('wallza.sso.state', $state);
+        $request = Request::create('/s/sso_login_check/Wallza?code=one-time-code&state='.$state);
+        $request->setSession($session);
+
+        $router = $this->createMock(RouterInterface::class);
+        $router->method('generate')->willReturn('/s/sso_login_check/Wallza');
+
+        $user = $this->getMockBuilder(User::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['isPublished', 'getEmail'])
+            ->getMock();
+        $user->method('isPublished')->willReturn(true);
+        $user->method('getEmail')->willReturn('different@example.test');
+
+        $userRepository = $this->createMock(UserRepository::class);
+        $userRepository->expects(self::once())
+            ->method('findOneBy')
+            ->with(['username' => '6f0f8f68-85d1-4e5f-93b7-9dfacabc14ba'])
+            ->willReturn($user);
+
+        $assertion = $this->createAssertion($state);
+        $httpClient = new MockHttpClient(static fn (): MockResponse => new MockResponse(
+            json_encode(['assertion' => $assertion], JSON_THROW_ON_ERROR),
+            ['http_code' => 200, 'response_headers' => ['content-type: application/json']]
+        ));
+
+        $event = $this->createAuthenticationEvent($request, true);
+        $subscriber = $this->subscriber($router, $httpClient, $userRepository);
         $subscriber->onUserPreAuthentication($event);
 
         self::assertFalse($event->isAuthenticated());
