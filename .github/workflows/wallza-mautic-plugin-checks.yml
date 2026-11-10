@@ -101,6 +101,14 @@ jobs:
       - name: Build pinned Oracle Mautic image
         run: docker build --pull --file deploy/oracle/Dockerfile --tag wallzaos/mautic:ci .
 
+      - name: Build Oracle Ampere arm64 image
+        run: |
+          docker buildx create --name wallza-arm64-builder --driver docker-container --use
+          docker buildx build --pull --platform linux/arm64 \
+            --file deploy/oracle/Dockerfile \
+            --output type=oci,dest=/tmp/wallza-mautic-arm64.oci .
+          test -s /tmp/wallza-mautic-arm64.oci
+
       - name: Verify runtime plugin location, autoloading and IMAP extension
         run: |
           docker run --rm --entrypoint php wallzaos/mautic:ci -r '
