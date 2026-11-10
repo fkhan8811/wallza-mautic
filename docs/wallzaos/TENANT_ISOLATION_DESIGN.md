@@ -1,6 +1,6 @@
 # WallzaOS Mautic — Tenant Isolation Design
 
-**Status:** Interim per-tenant deployment boundary implemented as a repeatable Oracle Compose template; not yet deployed or capacity-tested  
+**Status:** Per-tenant Oracle Compose data-plane template and Mautic-side Wallza SSO plugin implemented; not yet deployed, capacity-tested or connected to the WallzaOS authorization/token endpoints  
 **Baseline:** Mautic 7.2.2  
 **Identity discovery:** The connected Lovable project named `WallzaOS` is the public website/admin CMS. The connected `fkhan8811/Whatsapp` repo is the actual product backend reference: Supabase Auth user identity; `organizations` as tenant; `organization_members` and `agents` membership; `user_roles`, `permissions`, `role_permissions` and `user_permissions_override` for role/permission checks. Its server-side `requireOrganizationAccess` validates a bearer token with `supabase.auth.getUser(token)` and checks membership in the requested organization. Its `authorizeMetaOrganization` adds the stricter `integrations.manage` permission check. The website CMS has a separate content-team RBAC model; it is not the product-app tenant model.
 
@@ -15,7 +15,7 @@ Mautic's existing user ownership and own/other permissions are useful but do not
 For the first WallzaOS rollout, do **not** run multiple organizations in one Mautic database. Each organization receives a separate Mautic stack with its own MariaDB database, Mautic configuration volume, logs, uploaded media, private network and API credential. The image/code is shared, but customer data and runtime state are not.
 
 The repeatable template is in `deploy/oracle/`:
-- The image is pinned to the official Mautic 7.2.2 Apache release and copies the BillionMail plugin into the official Docker plugin directory.
+- The image is pinned to the official Mautic 7.2.2 Apache release and copies both the BillionMail SMTP and Wallza Identity plugins into the official Docker plugin directory.
 - MariaDB is the only Mautic application database; Supabase PostgreSQL remains the WallzaOS control plane.
 - Web, cron and Messenger worker containers run separately within the tenant's stack. The initial worker pool is capped at one consumer each for email, hit and failed queues to avoid the official image's six-process default overwhelming the 2-vCPU pilot host.
 - The Mautic web listener is bound to loopback and must sit behind the host HTTPS reverse proxy.
@@ -30,7 +30,7 @@ This template is a manual data-plane isolation mechanism, not the finished SaaS 
 - Tenant membership and role claims are resolved from trusted server-side identity, not accepted from arbitrary request parameters.
 - Every tenant-bound credential is scoped to one tenant and revocable.
 
-The WallzaOS reference backend has now been inspected. The exact Mautic bridge (OIDC/Supabase JWT validation, trusted reverse-proxy assertion, or server-to-server API gateway) still must be implemented. Mautic must validate the Supabase identity and organization membership through a trusted server-side path; the caller-supplied organization ID is a selector, never authorization. Do not trust custom headers from public clients.
+The WallzaOS reference backend has now been inspected. The Mautic-side SSO client is now implemented in `plugins/MauticWallzaIdentityBundle` using Mautic's native `sso_service` hook, session-bound state, a server-to-server authorization-code exchange, and a tenant-bound HS256 assertion. The corresponding WallzaOS authorization-code/token endpoints and protected tenant registry are still a separate backend task. Mautic does not decode browser-supplied Supabase JWTs or trust client-provided tenant IDs. The WallzaOS server must validate the Supabase access token and active organization membership before issuing a one-time code and assertion. Do not trust custom headers from public clients.
 
 ## 4. Current WallzaOS identity and tenant contract
 
