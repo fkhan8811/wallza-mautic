@@ -10,6 +10,7 @@ use Mautic\UserBundle\Event\AuthenticationEvent;
 use Mautic\UserBundle\Security\Authentication\Token\PluginToken;
 use MauticPlugin\MauticWallzaIdentityBundle\EventListener\WallzaSsoSubscriber;
 use MauticPlugin\MauticWallzaIdentityBundle\Integration\WallzaIntegration;
+use MauticPlugin\MauticWallzaIdentityBundle\Integration\WallzaIntegration;
 use MauticPlugin\MauticWallzaIdentityBundle\Security\WallzaSsoAssertionVerifier;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -283,7 +284,7 @@ final class WallzaSsoSubscriberTest extends TestCase
         return new AuthenticationEvent(
             null,
             new PluginToken(null, 'Wallza'),
-            $this->createMock(UserProviderInterface::class),
+            $this->createStub(UserProviderInterface::class),
             $request,
             $loginCheck,
             'Wallza',
