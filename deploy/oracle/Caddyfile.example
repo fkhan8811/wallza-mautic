@@ -1,0 +1,8 @@
+# Example Caddy site for one Mautic tenant.
+# Replace the hostname and local port before adding to your Caddy config.
+# The Docker Compose web port intentionally binds to 127.0.0.1.
+
+mautic.example.com {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:8080
+}
