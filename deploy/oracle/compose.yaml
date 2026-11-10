@@ -110,8 +110,11 @@ services:
     environment:
       <<: *mautic_environment
       DOCKER_MAUTIC_ROLE: mautic_worker
+      # Three separate consumer processes share this container. Bound each
+      # PHP process so the pool has headroom under its container memory limit.
+      PHP_INI_VALUE_MEMORY_LIMIT: 256M
       # Mautic's official image defaults to two consumers per queue (six total).
-      # Keep the initial Oracle pilot small; tune only after measuring queue depth and RAM.
+      # Keep the initial Oracle pilot at one per queue; tune after measured load.
       DOCKER_MAUTIC_WORKERS_CONSUME_EMAIL: ${MAUTIC_WORKERS_CONSUME_EMAIL:-1}
       DOCKER_MAUTIC_WORKERS_CONSUME_HIT: ${MAUTIC_WORKERS_CONSUME_HIT:-1}
       DOCKER_MAUTIC_WORKERS_CONSUME_FAILED: ${MAUTIC_WORKERS_CONSUME_FAILED:-1}
@@ -119,8 +122,8 @@ services:
     depends_on:
       mautic_web:
         condition: service_healthy
-    mem_limit: ${MAUTIC_WORKER_MEMORY_LIMIT:-768m}
-    cpus: ${MAUTIC_WORKER_CPUS:-0.25}
+    mem_limit: ${MAUTIC_WORKER_MEMORY_LIMIT:-1g}
+    cpus: ${MAUTIC_WORKER_CPUS:-0.45}
     networks:
       - mautic_internal
 
