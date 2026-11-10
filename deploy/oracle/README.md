@@ -48,6 +48,26 @@ The web container binds to `127.0.0.1` only. It is not publicly reachable by def
 
 After the first boot, open the tenant through the reverse proxy and complete Mautic's installer. The tenant has its own admin account and own Mautic database. Create a server-side API credential for WallzaOS and keep it in the WallzaOS backend secret store.
 
+After the installer has created the Mautic database, reload plugins and clear the application cache:
+
+```bash
+docker compose \
+  --project-directory deploy/oracle \
+  --project-name wallza-mautic-pilot \
+  --env-file ~/.config/wallzaos-mautic/tenants/pilot/.env \
+  -f deploy/oracle/compose.yaml \
+  exec mautic_web php bin/console mautic:plugins:reload
+
+docker compose \
+  --project-directory deploy/oracle \
+  --project-name wallza-mautic-pilot \
+  --env-file ~/.config/wallzaos-mautic/tenants/pilot/.env \
+  -f deploy/oracle/compose.yaml \
+  exec mautic_web php bin/console cache:clear
+```
+
+Replace `pilot` with the tenant's actual slug. These commands are tenant-local; run them only after Mautic's installer completes and before configuring the custom transport.
+
 ## BillionMail SMTP verification
 
 In each tenant's Mautic **Settings → Configuration → Email Settings**, set the DSN to the actual submission host and mailbox credentials issued by that tenant's BillionMail deployment.
