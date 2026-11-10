@@ -138,6 +138,42 @@ docker compose --project-directory deploy/oracle --project-name wallza-mautic-pi
 
 This uses Mautic's native IMAP feedback handling. It is not a BillionMail webhook and depends on BillionMail routing feedback messages into the configured folders.
 
+## Wallza Identity SSO setup
+
+The image includes the Mautic-side **Wallza Identity** SSO plugin. It is disabled until its tenant-specific environment is configured and the WallzaOS authorization/token endpoints are implemented.
+
+The provisioner automatically generates a different 256-bit `WALLZA_SSO_HMAC_SECRET` per tenant and stores it in the tenant's private `0600` env file. Do not print it, put it in Git, or expose it to the browser. The same secret must be stored in WallzaOS's protected tenant registry for the matching organization; do this through a secure secret-management path.
+
+Edit only the tenant's private env file and set:
+
+- `WALLZA_MAUTIC_TENANT_ID`: the exact immutable `organizations.id` UUID for this tenant.
+- `WALLZA_MAUTIC_BASE_URL`: its canonical public HTTPS URL (no query string).
+- `WALLZA_SSO_AUTHORIZE_URL`: trusted WallzaOS HTTPS authorization endpoint.
+- `WALLZA_SSO_TOKEN_URL`: trusted WallzaOS HTTPS one-time-code exchange endpoint.
+- `WALLZA_SSO_ISSUER`: the exact HTTPS `iss` claim the token endpoint signs.
+- `WALLZA_SSO_HMAC_SECRET`: leave the generated 64-hex-character value unchanged.
+
+The SSO secret is passed only to `mautic_web`; cron and worker containers do not receive it. After editing the env file, recreate only the web service to apply the SSO settings:
+
+```bash
+docker compose \\
+  --project-directory deploy/oracle \\
+  --project-name wallza-mautic-pilot \\
+  --env-file ~/.config/wallzaos-mautic/tenants/pilot/.env \\
+  -f deploy/oracle/compose.yaml \\
+  up -d mautic_web
+```
+
+Then reload the plugin and clear cache using the commands above, and enable/publish **Wallza** under Mautic **Settings → Integrations**. Provision each local Mautic user through that tenant's protected Mautic API with:
+- `username` set to the immutable Supabase Auth user UUID (`sub`);
+- `email` matching the user's verified Supabase email;
+- the account enabled/published; and
+- a role assigned by the tenant's Mautic administrator.
+
+The plugin never creates or enables a local user and never assigns a Mautic role from an assertion. It authenticates only the already-provisioned matching local user.
+
+**WallzaOS backend dependency:** the matching authorization-code/token endpoints and protected tenant registry are not implemented in this Mautic repository. WallzaOS must validate Supabase Auth identity and active organization membership before issuing a one-time code and must re-check membership at exchange. Until that backend is connected and a real Supabase-to-Mautic login has passed, leave the Wallza integration unpublished and do not enable public SSO.
+
 ## WallzaOS routing contract
 
 The WallzaOS backend—not the browser—must map an authenticated Supabase user and authorized organization to exactly one tenant stack:
