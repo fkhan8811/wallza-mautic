@@ -9,6 +9,7 @@ use Mautic\UserBundle\Entity\UserRepository;
 use Mautic\UserBundle\Event\AuthenticationEvent;
 use Mautic\UserBundle\Security\Authentication\Token\PluginToken;
 use MauticPlugin\MauticWallzaIdentityBundle\EventListener\WallzaSsoSubscriber;
+use MauticPlugin\MauticWallzaIdentityBundle\Integration\WallzaIntegration;
 use MauticPlugin\MauticWallzaIdentityBundle\Security\WallzaSsoAssertionVerifier;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -49,19 +50,19 @@ final class WallzaSsoSubscriberTest extends TestCase
 
         $subscriber->onUserPreAuthentication($event);
 
-        self::assertInstanceOf(RedirectResponse::class, $event->getResponse());
+        $this->assertInstanceOf(RedirectResponse::class, $event->getResponse());
         $location = $event->getResponse()->getTargetUrl();
-        self::assertStringStartsWith(self::AUTHORIZE_URL.'?', $location);
+        $this->assertStringStartsWith(self::AUTHORIZE_URL.'?', $location);
 
         parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
-        self::assertSame('code', $query['response_type']);
-        self::assertSame(self::TENANT, $query['client_id']);
-        self::assertSame(self::TENANT, $query['tenant_id']);
-        self::assertSame(self::BASE_URL.'/s/sso_login_check/Wallza', $query['redirect_uri']);
-        self::assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $query['state']);
-        self::assertSame($query['state'], $session->get('wallza.sso.state'));
-        self::assertFalse($event->isAuthenticated());
-        self::assertFalse($event->isFailed());
+        $this->assertSame('code', $query['response_type']);
+        $this->assertSame(self::TENANT, $query['client_id']);
+        $this->assertSame(self::TENANT, $query['tenant_id']);
+        $this->assertSame(self::BASE_URL.'/s/sso_login_check/Wallza', $query['redirect_uri']);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $query['state']);
+        $this->assertSame($query['state'], $session->get('wallza.sso.state'));
+        $this->assertFalse($event->isAuthenticated());
+        $this->assertFalse($event->isFailed());
     }
 
     public function testCallbackAuthenticatesOnlyAnExistingPublishedMauticUser(): void
@@ -108,10 +109,10 @@ final class WallzaSsoSubscriberTest extends TestCase
 
         $subscriber->onUserPreAuthentication($event);
 
-        self::assertTrue($event->isAuthenticated());
-        self::assertFalse($event->isFailed());
-        self::assertSame($user, $event->getUser());
-        self::assertFalse($session->has('wallza.sso.state'));
+        $this->assertTrue($event->isAuthenticated());
+        $this->assertFalse($event->isFailed());
+        $this->assertSame($user, $event->getUser());
+        $this->assertFalse($session->has('wallza.sso.state'));
     }
 
     public function testCallbackFailsClosedWhenTheMauticUserHasNotBeenProvisioned(): void
@@ -142,9 +143,9 @@ final class WallzaSsoSubscriberTest extends TestCase
 
         $subscriber->onUserPreAuthentication($event);
 
-        self::assertFalse($event->isAuthenticated());
-        self::assertTrue($event->isFailed());
-        self::assertFalse($session->has('wallza.sso.state'));
+        $this->assertFalse($event->isAuthenticated());
+        $this->assertTrue($event->isFailed());
+        $this->assertFalse($session->has('wallza.sso.state'));
     }
 
     public function testCallbackFailsClosedWhenTheProvisionedSubjectHasAnotherEmail(): void
@@ -181,9 +182,9 @@ final class WallzaSsoSubscriberTest extends TestCase
         $subscriber = $this->subscriber($router, $httpClient, $userRepository);
         $subscriber->onUserPreAuthentication($event);
 
-        self::assertFalse($event->isAuthenticated());
-        self::assertTrue($event->isFailed());
-        self::assertFalse($session->has('wallza.sso.state'));
+        $this->assertFalse($event->isAuthenticated());
+        $this->assertTrue($event->isFailed());
+        $this->assertFalse($session->has('wallza.sso.state'));
     }
 
     public function testCallbackRejectsStateMismatchBeforeMakingTokenRequest(): void
@@ -202,14 +203,14 @@ final class WallzaSsoSubscriberTest extends TestCase
         $subscriber = $this->subscriber($router, $httpClient);
         $subscriber->onUserPreAuthentication($event);
 
-        self::assertTrue($event->isFailed());
-        self::assertFalse($event->isAuthenticated());
-        self::assertSame(0, $httpClient->getRequestsCount());
-        self::assertFalse($session->has('wallza.sso.state'));
-        self::assertInstanceOf(RedirectResponse::class, $event->getResponse());
-        self::assertSame('/s/login', $event->getResponse()->getTargetUrl());
-        self::assertInstanceOf(CustomUserMessageAuthenticationException::class, $session->get(SecurityRequestAttributes::AUTHENTICATION_ERROR));
-        self::assertSame(
+        $this->assertTrue($event->isFailed());
+        $this->assertFalse($event->isAuthenticated());
+        $this->assertSame(0, $httpClient->getRequestsCount());
+        $this->assertFalse($session->has('wallza.sso.state'));
+        $this->assertInstanceOf(RedirectResponse::class, $event->getResponse());
+        $this->assertSame('/s/login', $event->getResponse()->getTargetUrl());
+        $this->assertInstanceOf(CustomUserMessageAuthenticationException::class, $session->get(SecurityRequestAttributes::AUTHENTICATION_ERROR));
+        $this->assertSame(
             'Wallza SSO authentication failed. Please sign in again.',
             $session->get(SecurityRequestAttributes::AUTHENTICATION_ERROR)->getMessageKey()
         );
@@ -248,9 +249,9 @@ final class WallzaSsoSubscriberTest extends TestCase
         $subscriber = $this->subscriber($router, $httpClient, $userRepository);
         $subscriber->onUserPreAuthentication($event);
 
-        self::assertFalse($event->isAuthenticated());
-        self::assertTrue($event->isFailed());
-        self::assertFalse($session->has('wallza.sso.state'));
+        $this->assertFalse($event->isAuthenticated());
+        $this->assertTrue($event->isFailed());
+        $this->assertFalse($session->has('wallza.sso.state'));
     }
 
     public function testIgnoresOtherMauticSsoIntegrations(): void
@@ -260,7 +261,7 @@ final class WallzaSsoSubscriberTest extends TestCase
         $event = new AuthenticationEvent(
             null,
             new PluginToken(null, 'Other'),
-            $this->createMock(UserProviderInterface::class),
+            $this->createStub(UserProviderInterface::class),
             $request,
             false,
             'Other',
@@ -273,8 +274,8 @@ final class WallzaSsoSubscriberTest extends TestCase
         $subscriber = $this->subscriber($router, new MockHttpClient());
         $subscriber->onUserPreAuthentication($event);
 
-        self::assertFalse($event->isAuthenticated());
-        self::assertFalse($event->isFailed());
+        $this->assertFalse($event->isAuthenticated());
+        $this->assertFalse($event->isFailed());
     }
 
     private function createAuthenticationEvent(Request $request, bool $loginCheck): AuthenticationEvent
@@ -298,7 +299,7 @@ final class WallzaSsoSubscriberTest extends TestCase
         return new WallzaSsoSubscriber(
             $router,
             $httpClient,
-            $userRepository ?? $this->createMock(UserRepository::class),
+            $userRepository ?? $this->createStub(UserRepository::class),
             new WallzaSsoAssertionVerifier(self::SECRET, self::ISSUER, self::TENANT),
             new NullLogger(),
             self::AUTHORIZE_URL,
