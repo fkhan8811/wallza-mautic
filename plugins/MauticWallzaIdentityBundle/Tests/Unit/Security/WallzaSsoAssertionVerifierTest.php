@@ -96,6 +96,15 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
         $this->verifier()->verify($assertion, self::STATE, self::NOW);
     }
 
+    public function testRejectsANonUuidSubject(): void
+    {
+        $assertion = $this->createAssertion(['sub' => 'not-a-supabase-uuid']);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('verified user identity');
+        $this->verifier()->verify($assertion, self::STATE, self::NOW);
+    }
+
     public function testRejectsAnUnsupportedSigningAlgorithm(): void
     {
         $assertion = $this->createAssertion([], null, ['alg' => 'none']);
