@@ -32,22 +32,22 @@ final class BillionMailTransportFactoryTest extends TestCase
             static fn (string $name): string => $dsn
         );
 
-        self::assertSame($dsn, $processed);
+        $this->assertSame($dsn, $processed);
         $parsed = MauticDsn::fromString($processed);
-        self::assertSame('billionmail+smtp', $parsed->getScheme());
-        self::assertSame('marketing@example.com', $parsed->getUser());
+        $this->assertSame('billionmail+smtp', $parsed->getScheme());
+        $this->assertSame('marketing@example.com', $parsed->getUser());
 
         $transport = $this->factory()->create(Dsn::fromString($processed));
-        self::assertSame('marketing@example.com', $transport->getUsername());
+        $this->assertSame('marketing@example.com', $transport->getUsername());
     }
 
     public function testOnlyBillionMailSchemesAreSupported(): void
     {
         $factory = $this->factory();
 
-        self::assertTrue($factory->supports(Dsn::fromString('billionmail+smtp://mailer:secret@mail.example.test:587')));
-        self::assertTrue($factory->supports(Dsn::fromString('billionmail+smtps://mailer:secret@mail.example.test:465')));
-        self::assertFalse($factory->supports(Dsn::fromString('smtp://mailer:secret@mail.example.test:587')));
+        $this->assertTrue($factory->supports(Dsn::fromString('billionmail+smtp://mailer:secret@mail.example.test:587')));
+        $this->assertTrue($factory->supports(Dsn::fromString('billionmail+smtps://mailer:secret@mail.example.test:465')));
+        $this->assertFalse($factory->supports(Dsn::fromString('smtp://mailer:secret@mail.example.test:587')));
     }
 
     public function testCreatesStartTlsTransportWithConfiguredCredentialsAndSecureDefaults(): void
@@ -56,15 +56,15 @@ final class BillionMailTransportFactoryTest extends TestCase
             'billionmail+smtp://mailer:secret@mail.example.test:587?auto_tls=true&max_per_second=4'
         ));
 
-        self::assertInstanceOf(EsmtpTransport::class, $transport);
-        self::assertSame('mailer', $transport->getUsername());
-        self::assertSame('secret', $transport->getPassword());
-        self::assertTrue($transport->isTlsRequired());
+        $this->assertInstanceOf(EsmtpTransport::class, $transport);
+        $this->assertSame('mailer', $transport->getUsername());
+        $this->assertSame('secret', $transport->getPassword());
+        $this->assertTrue($transport->isTlsRequired());
 
         $stream = $transport->getStream();
-        self::assertInstanceOf(SocketStream::class, $stream);
-        self::assertSame('mail.example.test', $stream->getHost());
-        self::assertSame(587, $stream->getPort());
+        $this->assertInstanceOf(SocketStream::class, $stream);
+        $this->assertSame('mail.example.test', $stream->getHost());
+        $this->assertSame(587, $stream->getPort());
     }
 
     public function testSmtpsSchemeCreatesImplicitTlsTransport(): void
@@ -73,13 +73,13 @@ final class BillionMailTransportFactoryTest extends TestCase
             'billionmail+smtps://mailer:secret@mail.example.test:465'
         ));
 
-        self::assertInstanceOf(EsmtpTransport::class, $transport);
-        self::assertTrue($transport->isTlsRequired());
+        $this->assertInstanceOf(EsmtpTransport::class, $transport);
+        $this->assertTrue($transport->isTlsRequired());
 
         $stream = $transport->getStream();
-        self::assertInstanceOf(SocketStream::class, $stream);
-        self::assertSame(465, $stream->getPort());
-        self::assertTrue($stream->isTLS());
+        $this->assertInstanceOf(SocketStream::class, $stream);
+        $this->assertSame(465, $stream->getPort());
+        $this->assertTrue($stream->isTLS());
     }
 
     public function testTlsRequirementCanOnlyBeDisabledExplicitly(): void
@@ -88,7 +88,7 @@ final class BillionMailTransportFactoryTest extends TestCase
             'billionmail+smtp://mailer:secret@mail.example.test:25?auto_tls=false&require_tls=false'
         ));
 
-        self::assertInstanceOf(EsmtpTransport::class, $transport);
-        self::assertFalse($transport->isTlsRequired());
+        $this->assertInstanceOf(EsmtpTransport::class, $transport);
+        $this->assertFalse($transport->isTlsRequired());
     }
 }
