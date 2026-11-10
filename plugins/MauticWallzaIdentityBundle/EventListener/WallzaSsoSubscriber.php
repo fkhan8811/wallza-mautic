@@ -167,7 +167,9 @@ final readonly class WallzaSsoSubscriber implements EventSubscriberInterface
         $this->assertHttpsUrl($this->tokenUrl);
         $this->assertHttpsUrl($this->baseUrl);
 
-        if ('' === $this->tenantId || strlen($this->tenantId) > 191 || strlen($this->hmacSecret) < 32) {
+        if (1 !== preg_match('/\\A[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\\z/i', $this->tenantId)
+            || 1 !== preg_match('/\\A[a-f0-9]{64}\\z/i', $this->hmacSecret)
+        ) {
             throw new \RuntimeException('Wallza SSO tenant configuration is incomplete.');
         }
     }
