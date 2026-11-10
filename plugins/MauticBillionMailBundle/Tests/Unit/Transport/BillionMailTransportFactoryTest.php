@@ -41,6 +41,7 @@ final class BillionMailTransportFactoryTest extends TestCase
         $this->assertSame('marketing@example.com', $parsed->getUser());
 
         $transport = $this->factory()->create(Dsn::fromString($processed));
+        $this->assertInstanceOf(EsmtpTransport::class, $transport);
         $this->assertSame('marketing@example.com', $transport->getUsername());
     }
 
