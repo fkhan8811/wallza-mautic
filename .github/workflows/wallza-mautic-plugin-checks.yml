@@ -46,6 +46,14 @@ jobs:
       - name: Lint plugin PHP files
         run: find plugins/MauticBillionMailBundle -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l
 
+      - name: Build pinned Oracle Mautic image
+        run: docker build --pull --file deploy/oracle/Dockerfile --tag wallzaos/mautic:ci .
+
+      - name: Verify runtime plugin location and IMAP extension
+        run: |
+          docker run --rm --entrypoint sh wallzaos/mautic:ci -lc 'test -f /var/www/html/docroot/plugins/MauticBillionMailBundle/MauticBillionMailBundle.php'
+          docker run --rm --entrypoint php wallzaos/mautic:ci -r 'if (!extension_loaded("imap")) { fwrite(STDERR, "PHP IMAP extension is required for monitored-email processing.\\n"); exit(1); }'
+
       - name: Validate Oracle Compose and tenant provisioner
         run: |
           bash -n deploy/oracle/provision-tenant.sh
