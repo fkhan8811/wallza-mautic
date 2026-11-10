@@ -1,17 +1,11 @@
-.git
-.github
-.ddev
-.idea
-.vscode
-node_modules
-vendor
-var/cache
-var/logs
-var/tmp
-tests/_output
-coverage*
-junit.xml
-*.log
-.env
-.env.*
-!.env.example
+# The custom Mautic image only needs this bundle and its Dockerfile.
+# Exclude the Mautic monorepo, local secrets, CI files and development assets.
+**
+
+!plugins/
+!plugins/MauticBillionMailBundle/
+!plugins/MauticBillionMailBundle/**
+
+!deploy/
+!deploy/oracle/
+!deploy/oracle/Dockerfile
