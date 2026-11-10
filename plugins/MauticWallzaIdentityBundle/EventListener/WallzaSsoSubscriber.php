@@ -32,6 +32,7 @@ final readonly class WallzaSsoSubscriber implements EventSubscriberInterface
         private string $tokenUrl,
         private string $tenantId,
         private string $baseUrl,
+        private string $issuer,
         private string $hmacSecret,
     ) {
     }
@@ -172,10 +173,12 @@ final readonly class WallzaSsoSubscriber implements EventSubscriberInterface
         $this->assertHttpsUrl($this->authorizeUrl);
         $this->assertHttpsUrl($this->tokenUrl);
         $this->assertHttpsUrl($this->baseUrl);
+        $this->assertHttpsUrl($this->issuer);
 
-        $baseUrlParts = parse_url($this->baseUrl);
-        if (isset($baseUrlParts['query'])) {
-            throw new \\RuntimeException('Wallza Mautic base URL must not contain a query string.');
+        if (null !== parse_url($this->baseUrl, PHP_URL_QUERY)
+            || null !== parse_url($this->issuer, PHP_URL_QUERY)
+        ) {
+            throw new \RuntimeException('Wallza Mautic base URL and SSO issuer must not contain a query string.');
         }
 
         if (1 !== preg_match('/\\A[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\\z/i', $this->tenantId)
@@ -192,7 +195,7 @@ final readonly class WallzaSsoSubscriber implements EventSubscriberInterface
             || '' === (string) ($parts['host'] ?? '')
             || isset($parts['user']) || isset($parts['pass']) || isset($parts['fragment'])
         ) {
-            throw new \RuntimeException('Wallza SSO endpoints and Mautic base URL must be trusted HTTPS URLs.');
+            throw new \RuntimeException('Wallza SSO endpoints, issuer and Mautic base URL must be trusted HTTPS URLs.');
         }
     }
 
