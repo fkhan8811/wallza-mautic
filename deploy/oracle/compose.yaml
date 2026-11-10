@@ -1,5 +1,16 @@
 name: ${COMPOSE_PROJECT_NAME:-wallza-mautic-tenant}
 
+x-mautic-environment: &mautic_environment
+  MAUTIC_DB_HOST: db
+  MAUTIC_DB_PORT: "3306"
+  MAUTIC_DB_DATABASE: ${MARIADB_DATABASE:-mautic}
+  MAUTIC_DB_USER: ${MARIADB_USER:-mautic}
+  MAUTIC_DB_PASSWORD: ${MARIADB_PASSWORD:?Set MARIADB_PASSWORD in the tenant env file}
+  MAUTIC_MESSENGER_DSN_EMAIL: doctrine://default
+  MAUTIC_MESSENGER_DSN_HIT: doctrine://default
+  DOCKER_MAUTIC_LOAD_TEST_DATA: "0"
+  PHP_INI_VALUE_MEMORY_LIMIT: 512M
+
 services:
   db:
     image: mariadb:11.4
@@ -37,17 +48,9 @@ services:
     ports:
       # Bind only to loopback. Put Caddy/Nginx in front for public HTTPS.
       - "${MAUTIC_HTTP_BIND:-127.0.0.1}:${MAUTIC_HTTP_PORT:-8080}:80"
-    environment: &mautic_environment
+    environment:
+      <<: *mautic_environment
       DOCKER_MAUTIC_ROLE: mautic_web
-      MAUTIC_DB_HOST: db
-      MAUTIC_DB_PORT: "3306"
-      MAUTIC_DB_DATABASE: ${MARIADB_DATABASE:-mautic}
-      MAUTIC_DB_USER: ${MARIADB_USER:-mautic}
-      MAUTIC_DB_PASSWORD: ${MARIADB_PASSWORD:?Set MARIADB_PASSWORD in the tenant env file}
-      MAUTIC_MESSENGER_DSN_EMAIL: doctrine://default
-      MAUTIC_MESSENGER_DSN_HIT: doctrine://default
-      DOCKER_MAUTIC_LOAD_TEST_DATA: "0"
-      PHP_INI_VALUE_MEMORY_LIMIT: 512M
       WALLZA_MAUTIC_TENANT_ID: ${WALLZA_MAUTIC_TENANT_ID:-}
       WALLZA_MAUTIC_BASE_URL: ${WALLZA_MAUTIC_BASE_URL:-}
       WALLZA_SSO_AUTHORIZE_URL: ${WALLZA_SSO_AUTHORIZE_URL:-}
