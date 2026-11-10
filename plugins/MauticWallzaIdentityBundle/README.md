@@ -115,7 +115,24 @@ Mautic verifies the signature with `hash_equals`, header algorithm/type, issuer,
 
 The assertion is not a user-provisioning or role-assignment API.
 
-1. WallzaOS must provision the Mautic user through the protected, tenant-local Mautic API before the first SSO login. Set the local Mautic `username` to the immutable Supabase Auth user UUID (`sub`); do not use email as the stable key. This provisioning path uses the tenant's server-side Mautic API credential.
+1. WallzaOS must provision the Mautic user through the protected, tenant-local Mautic API before the first SSO login. Mautic 7.2.2 exposes the API Platform v2 user resource:
+   - `POST /api/v2/users` creates a user and requires the `user:users:create` permission on the tenant-scoped OAuth2 token.
+   - The request accepts `username`, `firstName`, `lastName`, `email`, `plainPassword` and a tenant-local role IRI such as `/api/v2/roles/3`.
+   - Set `username` to the immutable Supabase Auth user UUID (`sub`); do not use email as the stable key.
+   - Generate a strong random initial password on the WallzaOS server, send it only over the authenticated server-to-server API request, and never expose or log it. Mautic's `UserProcessor` hashes `plainPassword`; the password hash is not returned in API responses.
+   - Assign a pre-created least-privilege role belonging to that Mautic tenant. Do not grant the provisioning token `user:users:editother` unless it is required; never change the stable username after creation.
+   - Example request body:
+     ```json
+     {
+       "username": "00000000-0000-4000-8000-000000000001",
+       "firstName": "Example",
+       "lastName": "User",
+       "email": "user@example.com",
+       "plainPassword": "SERVER_GENERATED_RANDOM_PASSWORD",
+       "role": "/api/v2/roles/3"
+     }
+     ```
+   - Mautic's existing functional API test creates a user through this resource and verifies that the user can authenticate. The endpoint and permission must still be tested with the actual tenant API client and role in the deployed instance.
 2. Mautic looks up the local user by the exact Supabase UUID in `username`, requires the assertion's verified email to match the local Mautic email, and requires the Mautic account to be published/enabled.
 3. If the local account is absent or disabled, authentication fails closed.
 4. The plugin does not create users, enable accounts, or assign roles from JWT claims. The role remains the one assigned by the tenant's Mautic administrator.
