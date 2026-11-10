@@ -92,7 +92,10 @@ final class WallzaSsoSubscriberTest extends TestCase
         $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use ($assertion): MockResponse {
             TestCase::assertSame('POST', $method);
             TestCase::assertSame(self::TOKEN_URL, $url);
-            TestCase::assertSame([self::TENANT, self::SECRET], $options['auth_basic']);
+            TestCase::assertSame(
+                ['Authorization: Basic '.base64_encode(self::TENANT.':'.self::SECRET)],
+                $options['normalized_headers']['authorization'] ?? []
+            );
 
             return new MockResponse(json_encode(['assertion' => $assertion], JSON_THROW_ON_ERROR), [
                 'http_code' => 200,
