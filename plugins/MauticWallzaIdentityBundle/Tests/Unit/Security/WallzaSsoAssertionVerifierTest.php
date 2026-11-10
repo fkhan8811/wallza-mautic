@@ -6,7 +6,6 @@ namespace MauticPlugin\MauticWallzaIdentityBundle\Tests\Unit\Security;
 
 use MauticPlugin\MauticWallzaIdentityBundle\Security\WallzaSsoAssertionVerifier;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 final class WallzaSsoAssertionVerifierTest extends TestCase
 {
@@ -31,7 +30,7 @@ final class WallzaSsoAssertionVerifierTest extends TestCase
     {
         $assertion = $this->createAssertion([], 'another-secret-that-is-at-least-32-bytes-long');
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\\RuntimeException::class);
         $this->expectExceptionMessage('signature is invalid');
         $this->verifier()->verify($assertion, self::STATE, self::NOW);
     }
