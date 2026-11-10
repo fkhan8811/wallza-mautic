@@ -34,8 +34,9 @@
 - **Initial data-plane isolation choice:** one Mautic stack and one MariaDB database per WallzaOS organization. The Oracle deployment template and manual tenant provisioner are committed. Do not put multiple organizations in one Mautic database.
 - The WallzaOS backend still needs a protected tenant registry mapping an authorized organization to its Mautic URL and server-side API credential. Never accept the target URL or token from the browser.
 - [x] Implement the Mautic-side Wallza SSO client with session-bound state, server-to-server code exchange, signed tenant assertion verification, and existing-user-only login.
-- [ ] Implement the matching WallzaOS auth-code/token endpoints and protected tenant registry; require active membership at issuance and exchange.
-- [ ] Provision Mautic users through tenant-scoped API credentials; preserve tenant-local Mautic roles.
+- [x] Bind the existing tenant-local Mautic user by immutable Supabase UUID (`sub`) in `username` and separately require a matching signed verified email; preserve the locally assigned Mautic role.
+- [ ] Implement the matching WallzaOS auth-code/token endpoints and protected tenant registry; require active membership at issuance and exchange, atomically consume 60-second single-use codes, and sign per-tenant HS256 assertions.
+- [ ] Provision Mautic users through tenant-scoped API credentials using Supabase UUID as Mautic `username` and matching verified email; preserve tenant-local Mautic roles.
 - [ ] Implement subscription/quota checks, automated tenant provisioning/suspension/deletion, and secure API credential rotation.
 - Propagate the organization mapping through queued work, retries, webhooks and support operations.
 - Add negative tests for tenant-to-stack routing, guessed organization IDs, revoked memberships and token/URL tampering.
