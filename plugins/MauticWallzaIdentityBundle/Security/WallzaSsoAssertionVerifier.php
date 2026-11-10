@@ -82,7 +82,7 @@ final readonly class WallzaSsoAssertionVerifier
         $last    = $payload['last_name'] ?? null;
         $jti     = $payload['jti'] ?? null;
 
-        if (!is_string($subject) || '' === trim($subject) || strlen($subject) > 191
+        if (!is_string($subject) || 1 !== preg_match('/\\A[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\\z/i', $subject)
             || !is_string($email) || false === filter_var($email, FILTER_VALIDATE_EMAIL)
             || true !== ($payload['email_verified'] ?? false)
             || !is_string($first) || '' === trim($first) || strlen($first) > 191
