@@ -91,6 +91,8 @@ final class BillionMailTransportFactoryTest extends TestCase
         $startTls = $this->factory()->create(Dsn::fromString('billionmail+smtp://mailer:secret@mail.example.test'));
         $implicitTls = $this->factory()->create(Dsn::fromString('billionmail+smtps://mailer:secret@mail.example.test'));
 
+        $this->assertInstanceOf(EsmtpTransport::class, $startTls);
+        $this->assertInstanceOf(EsmtpTransport::class, $implicitTls);
         $this->assertSame(587, $startTls->getStream()->getPort());
         $this->assertFalse($startTls->getStream()->isTLS());
         $this->assertSame(465, $implicitTls->getStream()->getPort());
