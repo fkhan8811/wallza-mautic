@@ -15,6 +15,8 @@ use Psr\Log\NullLogger;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
@@ -188,6 +190,9 @@ final class WallzaSsoSubscriberTest extends TestCase
         $request = Request::create('/s/sso_login_check/Wallza?code=one-time-code&state=attacker-state');
         $request->setSession($session);
         $router = $this->createMock(RouterInterface::class);
+        $router->method('generate')->willReturnCallback(
+            static fn (string $route): string => 'login' === $route ? '/s/login' : '/s/sso_login_check/Wallza'
+        );
         $httpClient = new MockHttpClient();
         $event = $this->createAuthenticationEvent($request, true);
 
@@ -198,6 +203,13 @@ final class WallzaSsoSubscriberTest extends TestCase
         self::assertFalse($event->isAuthenticated());
         self::assertSame(0, $httpClient->getRequestsCount());
         self::assertFalse($session->has('wallza.sso.state'));
+        self::assertInstanceOf(RedirectResponse::class, $event->getResponse());
+        self::assertSame('/s/login', $event->getResponse()->getTargetUrl());
+        self::assertInstanceOf(AuthenticationException::class, $session->get(SecurityRequestAttributes::AUTHENTICATION_ERROR));
+        self::assertSame(
+            'Wallza SSO authentication failed. Please sign in again.',
+            $session->get(SecurityRequestAttributes::AUTHENTICATION_ERROR)->getMessage()
+        );
     }
 
     public function testCallbackFailsClosedForAnUnpublishedMauticUser(): void
