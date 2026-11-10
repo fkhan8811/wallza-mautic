@@ -18,6 +18,14 @@ permissions:
 jobs:
   php-plugin-checks:
     runs-on: ubuntu-latest
+    env:
+      WALLZA_BILLIONMAIL_TEST_DSN: "billionmail+smtp://127.0.0.1:1025?auto_tls=false&require_tls=false"
+    services:
+      mailpit:
+        image: axllent/mailpit:v1.33.1
+        ports:
+          - 1025:1025
+          - 8025:8025
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -40,8 +48,24 @@ jobs:
       - name: Install Mautic dependencies for focused plugin tests
         run: composer install --prefer-dist --no-progress --no-interaction --no-scripts
 
+      - name: Wait for Mailpit SMTP and API endpoints
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8025/api/v1/info >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Mailpit did not become ready." >&2
+          exit 1
+
       - name: Run BillionMail PHPUnit tests in Mautic's test environment
         run: php bin/phpunit --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist plugins/MauticBillionMailBundle/Tests
+
+      - name: Verify message reached the SMTP sink
+        run: |
+          curl --fail --silent --show-error http://127.0.0.1:8025/api/v1/messages \
+            | grep -F "Wallza BillionMail transport smoke test"
 
       - name: Lint plugin PHP files
         run: find plugins/MauticBillionMailBundle -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l
