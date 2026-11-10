@@ -278,6 +278,11 @@ final class WallzaSsoSubscriberTest extends TestCase
         $this->assertFalse($event->isFailed());
     }
 
+    private function wallzaIntegration(): WallzaIntegration
+    {
+        return (new \\ReflectionClass(WallzaIntegration::class))->newInstanceWithoutConstructor();
+    }
+
     private function createAuthenticationEvent(Request $request, bool $loginCheck): AuthenticationEvent
     {
         return new AuthenticationEvent(
