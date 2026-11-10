@@ -31,5 +31,6 @@ return function (ContainerConfigurator $configurator): void {
         ->arg('$tokenUrl', '%env(default:wallza_sso_token_url:WALLZA_SSO_TOKEN_URL)%')
         ->arg('$tenantId', '%env(default:wallza_sso_tenant_id:WALLZA_MAUTIC_TENANT_ID)%')
         ->arg('$baseUrl', '%env(default:wallza_sso_base_url:WALLZA_MAUTIC_BASE_URL)%')
+        ->arg('$issuer', '%env(default:wallza_sso_issuer:WALLZA_SSO_ISSUER)%')
         ->arg('$hmacSecret', '%env(default:wallza_sso_hmac_secret:WALLZA_SSO_HMAC_SECRET)%');
 };
