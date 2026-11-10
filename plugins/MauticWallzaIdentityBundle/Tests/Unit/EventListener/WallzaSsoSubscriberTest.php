@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
@@ -205,10 +205,10 @@ final class WallzaSsoSubscriberTest extends TestCase
         self::assertFalse($session->has('wallza.sso.state'));
         self::assertInstanceOf(RedirectResponse::class, $event->getResponse());
         self::assertSame('/s/login', $event->getResponse()->getTargetUrl());
-        self::assertInstanceOf(AuthenticationException::class, $session->get(SecurityRequestAttributes::AUTHENTICATION_ERROR));
+        self::assertInstanceOf(CustomUserMessageAuthenticationException::class, $session->get(SecurityRequestAttributes::AUTHENTICATION_ERROR));
         self::assertSame(
             'Wallza SSO authentication failed. Please sign in again.',
-            $session->get(SecurityRequestAttributes::AUTHENTICATION_ERROR)->getMessage()
+            $session->get(SecurityRequestAttributes::AUTHENTICATION_ERROR)->getMessageKey()
         );
     }
 
