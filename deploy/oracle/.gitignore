@@ -1,0 +1,8 @@
+# Tenant-specific environment files and generated local data
+.env
+.env.*
+!.env.example
+tenants/
+data/
+*.sql
+*.sql.gz
