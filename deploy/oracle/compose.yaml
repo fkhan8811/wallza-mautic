@@ -1,0 +1,127 @@
+name: ${COMPOSE_PROJECT_NAME:-wallza-mautic-tenant}
+
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-mautic}
+      MARIADB_USER: ${MARIADB_USER:-mautic}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:?Set MARIADB_PASSWORD in the tenant env file}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?Set MARIADB_ROOT_PASSWORD in the tenant env file}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=512M
+      - --max-connections=60
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      start_period: 20s
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: ${MAUTIC_DB_MEMORY_LIMIT:-2g}
+    cpus: ${MAUTIC_DB_CPUS:-0.45}
+    networks:
+      - mautic_internal
+
+  mautic_web:
+    image: ${MAUTIC_IMAGE:-wallzaos/mautic:7.2.2-wallza1}
+    build:
+      context: ../..
+      dockerfile: deploy/oracle/Dockerfile
+    restart: unless-stopped
+    init: true
+    ports:
+      # Bind only to loopback. Put Caddy/Nginx in front for public HTTPS.
+      - "${MAUTIC_HTTP_BIND:-127.0.0.1}:${MAUTIC_HTTP_PORT:-8080}:80"
+    environment: &mautic_environment
+      MAUTIC_DB_HOST: db
+      MAUTIC_DB_PORT: "3306"
+      MAUTIC_DB_DATABASE: ${MARIADB_DATABASE:-mautic}
+      MAUTIC_DB_USER: ${MARIADB_USER:-mautic}
+      MAUTIC_DB_PASSWORD: ${MARIADB_PASSWORD:?Set MARIADB_PASSWORD in the tenant env file}
+      MAUTIC_MESSENGER_DSN_EMAIL: doctrine://default
+      MAUTIC_MESSENGER_DSN_HIT: doctrine://default
+      DOCKER_MAUTIC_LOAD_TEST_DATA: "0"
+      PHP_INI_VALUE_MEMORY_LIMIT: 512M
+    volumes: &mautic_volumes
+      - mautic_config:/var/www/html/config
+      - mautic_logs:/var/www/html/var/logs
+      - mautic_media_files:/var/www/html/docroot/media/files
+      - mautic_media_images:/var/www/html/docroot/media/images
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost/ >/dev/null || exit 1"]
+      start_period: 60s
+      interval: 20s
+      timeout: 8s
+      retries: 20
+    mem_limit: ${MAUTIC_WEB_MEMORY_LIMIT:-2g}
+    cpus: ${MAUTIC_WEB_CPUS:-0.65}
+    networks:
+      - mautic_internal
+
+  mautic_cron:
+    image: ${MAUTIC_IMAGE:-wallzaos/mautic:7.2.2-wallza1}
+    build:
+      context: ../..
+      dockerfile: deploy/oracle/Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      <<: *mautic_environment
+      DOCKER_MAUTIC_ROLE: mautic_cron
+    volumes: *mautic_volumes
+    depends_on:
+      mautic_web:
+        condition: service_healthy
+    mem_limit: ${MAUTIC_CRON_MEMORY_LIMIT:-512m}
+    cpus: ${MAUTIC_CRON_CPUS:-0.15}
+    networks:
+      - mautic_internal
+
+  mautic_worker:
+    image: ${MAUTIC_IMAGE:-wallzaos/mautic:7.2.2-wallza1}
+    build:
+      context: ../..
+      dockerfile: deploy/oracle/Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      <<: *mautic_environment
+      DOCKER_MAUTIC_ROLE: mautic_worker
+    volumes: *mautic_volumes
+    depends_on:
+      mautic_web:
+        condition: service_healthy
+    mem_limit: ${MAUTIC_WORKER_MEMORY_LIMIT:-768m}
+    cpus: ${MAUTIC_WORKER_CPUS:-0.25}
+    networks:
+      - mautic_internal
+
+  # Optional SMTP sink for testing the BillionMail transport in isolation.
+  # Start with: docker compose --profile test-smtp up -d mailpit
+  mailpit:
+    image: axllent/mailpit:v1.26
+    profiles: ["test-smtp"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MAILPIT_WEB_PORT:-8025}:8025"
+    networks:
+      - mautic_internal
+
+volumes:
+  db_data:
+  mautic_config:
+  mautic_logs:
+  mautic_media_files:
+  mautic_media_images:
+
+networks:
+  mautic_internal:
+    driver: bridge
