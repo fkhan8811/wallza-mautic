@@ -120,7 +120,19 @@ Open the Mailpit inbox at `http://127.0.0.1:8025` on the server or through a tru
 
 ## Bounce and unsubscribe ingestion
 
-Configure each tenant's BillionMail IMAP mailbox in **Settings → Configuration → Email Settings → Monitored Inbox Settings** using the deployed host, port `993`, SSL/TLS (`/ssl`), full mailbox address and mailbox password. Point the Bounces and optional Unsubscribe Requests folders at folders that actually receive those messages. Then schedule Mautic's native `mautic:email:fetch` command through the tenant's cron process.
+Configure each tenant's BillionMail IMAP mailbox in **Settings → Configuration → Email Settings → Monitored Inbox Settings** using the deployed host, port `993`, SSL/TLS (`/ssl`), full mailbox address and mailbox password. Point the Bounces and optional Unsubscribe Requests folders at folders that actually receive those messages.
+
+The supplied `mautic_cron` service mounts `deploy/oracle/mautic-cron`, which preserves Mautic's segment/campaign schedules and enables `mautic:email:fetch --message-limit=100` every minute. The command skips unconfigured folders, so the schedule is safe before IMAP credentials are entered. Check execution with:
+
+```bash
+docker compose --project-directory deploy/oracle --project-name wallza-mautic-pilot --env-file ~/.config/wallzaos-mautic/tenants/pilot/.env -f deploy/oracle/compose.yaml logs --tail=100 mautic_cron
+```
+
+To run one bounded fetch manually after IMAP is configured:
+
+```bash
+docker compose --project-directory deploy/oracle --project-name wallza-mautic-pilot --env-file ~/.config/wallzaos-mautic/tenants/pilot/.env -f deploy/oracle/compose.yaml exec --user www-data --workdir /var/www/html mautic_cron php bin/console mautic:email:fetch --message-limit=100
+```
 
 This uses Mautic's native IMAP feedback handling. It is not a BillionMail webhook and depends on BillionMail routing feedback messages into the configured folders.
 
