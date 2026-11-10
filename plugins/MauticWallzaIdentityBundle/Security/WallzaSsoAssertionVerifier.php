@@ -26,7 +26,10 @@ final readonly class WallzaSsoAssertionVerifier
     {
         $now ??= time();
 
-        if (strlen($this->secret) < 32 || '' === $this->tenantId || '' === $this->issuer) {
+        if (1 !== preg_match('/\\A[a-f0-9]{64}\\z/i', $this->secret)
+            || 1 !== preg_match('/\\A[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\\z/i', $this->tenantId)
+            || '' === $this->issuer
+        ) {
             throw new RuntimeException('Wallza SSO is not configured.');
         }
 
