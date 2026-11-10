@@ -1,0 +1,21 @@
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+BASH_ENV=/tmp/cron.env
+
+# Segment refresh - every 15 minutes
+0,15,30,45 * * * * php /var/www/html/bin/console mautic:segments:update 2>&1 | tee /tmp/stdout
+
+# Campaign membership update - every 15 minutes, starting 5 past the hour
+5,20,35,50 * * * * php /var/www/html/bin/console mautic:campaigns:update 2>&1 | tee /tmp/stdout
+
+# Campaign trigger processing - every 15 minutes, starting 10 past the hour
+10,25,40,55 * * * * php /var/www/html/bin/console mautic:campaigns:trigger 2>&1 | tee /tmp/stdout
+
+# Monitored inbox: process bounce and unsubscribe/feedback-loop messages every minute.
+# Blank/unconfigured IMAP folders are skipped by Mautic. A bounded batch limits work per run.
+* * * * * php /var/www/html/bin/console mautic:email:fetch --message-limit=100 2>&1 | tee /tmp/stdout
+
+# Social monitoring is intentionally disabled until the channel is configured.
+# */6 * * * * php /var/www/html/bin/console mautic:social:monitoring 2>&1 | tee /tmp/stdout
+
+# Imports, exports and webhooks are left to explicit tenant policy and queue configuration.

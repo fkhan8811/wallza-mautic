@@ -1,0 +1,13 @@
+# The custom Mautic image only needs this bundle and its Dockerfile.
+# Exclude the Mautic monorepo, local secrets, CI files and development assets.
+**
+
+!plugins/
+!plugins/MauticBillionMailBundle/
+!plugins/MauticBillionMailBundle/**
+!plugins/MauticWallzaIdentityBundle/
+!plugins/MauticWallzaIdentityBundle/**
+
+!deploy/
+!deploy/oracle/
+!deploy/oracle/Dockerfile

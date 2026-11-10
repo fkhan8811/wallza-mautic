@@ -1,0 +1,92 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MauticPlugin\MauticBillionMailBundle\Transport;
+
+use Symfony\Component\Mailer\Exception\UnsupportedSchemeException;
+use Symfony\Component\Mailer\Transport\AbstractTransportFactory;
+use Symfony\Component\Mailer\Transport\Dsn;
+use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
+use Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream;
+use Symfony\Component\Mailer\Transport\TransportInterface;
+
+/**
+ * Maps the explicit BillionMail DSN schemes to Symfony's native ESMTP transport.
+ *
+ * This keeps Mautic's normal message rendering, campaign processing, and SMTP send
+ * path intact. Because this is a standard SMTP transport (not Mautic's optional
+ * TokenTransportInterface), Mautic uses its normal per-contact send path rather
+ * than provider-side recipient tokenization or asynchronous provider callbacks.
+ */
+final class BillionMailTransportFactory extends AbstractTransportFactory
+{
+    public function create(Dsn $dsn): TransportInterface
+    {
+        if (!$this->supports($dsn)) {
+            throw new UnsupportedSchemeException($dsn, 'BillionMail', $this->getSupportedSchemes());
+        }
+
+        $scheme = $dsn->getScheme();
+        // SMTPS is encrypted from connect(); STARTTLS is only for the smtp scheme.
+        $autoTls = 'billionmail+smtp' === $scheme
+            && filter_var($dsn->getOption('auto_tls', true), FILTER_VALIDATE_BOOL);
+        $tls = 'billionmail+smtps' === $scheme ? true : ($autoTls ? null : false);
+        $defaultPort = 'billionmail+smtps' === $scheme ? 465 : 587;
+        $port = $dsn->getPort($defaultPort) ?? $defaultPort;
+
+        $transport = new EsmtpTransport(
+            $dsn->getHost(),
+            $port,
+            $tls,
+            $this->dispatcher,
+            $this->logger
+        );
+
+        $transport->setAutoTls($autoTls);
+        // Require encryption unless an administrator explicitly opts out in the DSN.
+        $transport->setRequireTls($dsn->getBooleanOption('require_tls', true));
+
+        /** @var SocketStream $stream */
+        $stream = $transport->getStream();
+        if ('' !== ($sourceIp = (string) $dsn->getOption('source_ip', ''))) {
+            $stream->setSourceIp($sourceIp);
+        }
+
+        // TLS peer verification remains enabled by default; this adapter does not
+        // expose an insecure "disable certificate verification" shortcut.
+        if ($user = $dsn->getUser()) {
+            $transport->setUsername($user);
+        }
+
+        if (null !== ($password = $dsn->getPassword())) {
+            $transport->setPassword($password);
+        }
+
+        if (null !== ($localDomain = $dsn->getOption('local_domain'))) {
+            $transport->setLocalDomain((string) $localDomain);
+        }
+
+        if (null !== ($maxPerSecond = $dsn->getOption('max_per_second'))) {
+            $transport->setMaxPerSecond((float) $maxPerSecond);
+        }
+
+        if (null !== ($restartThreshold = $dsn->getOption('restart_threshold'))) {
+            $transport->setRestartThreshold(
+                (int) $restartThreshold,
+                (int) $dsn->getOption('restart_threshold_sleep', 0)
+            );
+        }
+
+        if (null !== ($pingThreshold = $dsn->getOption('ping_threshold'))) {
+            $transport->setPingThreshold((int) $pingThreshold);
+        }
+
+        return $transport;
+    }
+
+    protected function getSupportedSchemes(): array
+    {
+        return ['billionmail+smtp', 'billionmail+smtps'];
+    }
+}

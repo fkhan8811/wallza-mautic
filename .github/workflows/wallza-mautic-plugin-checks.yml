@@ -1,0 +1,164 @@
+name: WallzaOS Mautic plugin checks
+
+on:
+  push:
+    branches:
+      - wallza/marketing-automation-upgrades
+    paths:
+      - "plugins/MauticBillionMailBundle/**"
+      - "plugins/MauticWallzaIdentityBundle/**"
+      - "composer.json"
+      - "composer.lock"
+      - "deploy/oracle/**"
+      - ".dockerignore"
+      - ".github/workflows/wallza-mautic-plugin-checks.yml"
+  pull_request:
+    branches:
+      - wallza/mautic-7.2.2
+    paths:
+      - "plugins/MauticBillionMailBundle/**"
+      - "plugins/MauticWallzaIdentityBundle/**"
+      - "composer.json"
+      - "composer.lock"
+      - "deploy/oracle/**"
+      - ".dockerignore"
+      - ".github/workflows/wallza-mautic-plugin-checks.yml"
+
+concurrency:
+  group: wallza-mautic-plugin-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  php-plugin-checks:
+    runs-on: ubuntu-latest
+    env:
+      WALLZA_BILLIONMAIL_TEST_DSN: "billionmail+smtp://127.0.0.1:1025?auto_tls=false&require_tls=false"
+    services:
+      mailpit:
+        image: axllent/mailpit:v1.33.1
+        ports:
+          - 1025:1025
+          - 8025:8025
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: "8.2"
+          tools: composer:v2
+          extensions: mbstring, xml, ctype, iconv, intl, imap, pdo_sqlite, mysql, pdo_mysql
+          coverage: none
+
+      - name: Validate root Composer metadata and lock file
+        run: composer validate --no-check-publish --no-interaction
+
+      - name: Validate BillionMail plugin Composer metadata
+        working-directory: plugins/MauticBillionMailBundle
+        run: composer validate --no-check-publish --no-interaction
+
+      - name: Validate Wallza Identity plugin Composer metadata
+        working-directory: plugins/MauticWallzaIdentityBundle
+        run: composer validate --no-check-publish --no-interaction
+
+      - name: Install Mautic dependencies for focused plugin tests
+        run: composer install --prefer-dist --no-progress --no-interaction --no-scripts
+
+      - name: Wait for Mailpit SMTP and API endpoints
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8025/api/v1/info >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Mailpit did not become ready." >&2
+          exit 1
+
+      - name: Run BillionMail PHPUnit tests in Mautic's test environment
+        run: php bin/phpunit --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist plugins/MauticBillionMailBundle/Tests
+
+      - name: Run Wallza Identity PHPUnit tests in Mautic's test environment
+        run: php bin/phpunit --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist plugins/MauticWallzaIdentityBundle/Tests
+
+      - name: Verify message reached the SMTP sink
+        run: |
+          curl --fail --silent --show-error http://127.0.0.1:8025/api/v1/messages \
+            | jq -e '.messages | any(.Subject == "Wallza BillionMail transport smoke test")' >/dev/null
+
+      - name: Lint plugin PHP files
+        run: find plugins/MauticBillionMailBundle plugins/MauticWallzaIdentityBundle -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l
+
+      - name: Verify pinned base image supports Oracle amd64 and Ampere arm64
+        run: |
+          docker buildx imagetools inspect --raw "mautic/mautic:7.2.2-20261026-apache@sha256:83461b9ec7c109413281490180e1f96c379aa935bd92f80c68294f98487a9015" \
+            | jq -e '[.manifests[].platform | "\(.os)/\(.architecture)"] | index("linux/amd64") != null and index("linux/arm64") != null' >/dev/null
+
+      - name: Build pinned Oracle Mautic image
+        run: docker build --pull --file deploy/oracle/Dockerfile --tag wallzaos/mautic:ci .
+
+      - name: Build Oracle Ampere arm64 image
+        run: |
+          docker buildx create --name wallza-arm64-builder --driver docker-container --use
+          docker buildx build --pull --platform linux/arm64 \
+            --file deploy/oracle/Dockerfile \
+            --output type=oci,dest=/tmp/wallza-mautic-arm64.oci .
+          test -s /tmp/wallza-mautic-arm64.oci
+
+      - name: Verify runtime plugin location, autoloading and IMAP extension
+        run: |
+          docker run --rm --entrypoint php wallzaos/mautic:ci -r '
+            require "/var/www/html/vendor/autoload.php";
+            $classes = [
+              "MauticPlugin\\MauticBillionMailBundle\\MauticBillionMailBundle",
+              "MauticPlugin\\MauticBillionMailBundle\\DependencyInjection\\MauticBillionMailExtension",
+              "MauticPlugin\\MauticBillionMailBundle\\Transport\\BillionMailTransportFactory",
+              "MauticPlugin\\MauticWallzaIdentityBundle\\MauticWallzaIdentityBundle",
+              "MauticPlugin\\MauticWallzaIdentityBundle\\DependencyInjection\\MauticWallzaIdentityExtension",
+              "MauticPlugin\\MauticWallzaIdentityBundle\\Integration\\WallzaIntegration",
+              "MauticPlugin\\MauticWallzaIdentityBundle\\EventListener\\WallzaSsoSubscriber",
+              "MauticPlugin\\MauticWallzaIdentityBundle\\Security\\WallzaSsoAssertionVerifier",
+            ];
+            foreach ($classes as $class) {
+              if (!class_exists($class)) {
+                fwrite(STDERR, "Runtime autoload failed: ".$class.PHP_EOL);
+                exit(1);
+              }
+            }
+            if (!extension_loaded("imap")) {
+              fwrite(STDERR, "PHP IMAP extension is required for monitored-email processing.".PHP_EOL);
+              exit(1);
+            }
+            echo "BillionMail plugin autoload and PHP IMAP checks passed.".PHP_EOL;
+          '
+
+      - name: Test tenant provisioner safety
+        run: |
+          bash -n deploy/oracle/provision-tenant.sh
+          bash -n deploy/oracle/tests/provisioner-smoke.sh
+          bash deploy/oracle/tests/provisioner-smoke.sh
+
+      - name: Validate Oracle Compose and tenant cron
+        run: |
+          test -s deploy/oracle/mautic-cron
+          grep -F 'mautic:email:fetch --message-limit=100' deploy/oracle/mautic-cron
+          grep -F 'DOCKER_MAUTIC_ROLE: mautic_web' deploy/oracle/compose.yaml
+          grep -F 'DOCKER_MAUTIC_WORKERS_CONSUME_EMAIL:' deploy/oracle/compose.yaml
+          grep -F 'DOCKER_MAUTIC_WORKERS_CONSUME_HIT:' deploy/oracle/compose.yaml
+          grep -F 'DOCKER_MAUTIC_WORKERS_CONSUME_FAILED:' deploy/oracle/compose.yaml
+          grep -F 'PHP_INI_VALUE_MEMORY_LIMIT: 256M' deploy/oracle/compose.yaml
+          grep -F 'mem_limit: ${MAUTIC_WORKER_MEMORY_LIMIT:-1g}' deploy/oracle/compose.yaml
+          grep -F 'cpus: ${MAUTIC_WORKER_CPUS:-0.45}' deploy/oracle/compose.yaml
+          grep -F 'MAUTIC_WORKER_MEMORY_LIMIT=1g' deploy/oracle/.env.example
+          docker compose --env-file deploy/oracle/.env.example -f deploy/oracle/compose.yaml config --quiet
+          docker compose --env-file deploy/oracle/.env.example -f deploy/oracle/compose.yaml config --format json \
+            | jq -e '.services.mautic_web.environment.WALLZA_SSO_HMAC_SECRET == "" and
+                     .services.mautic_web.environment.MAUTIC_MESSENGER_DSN_EMAIL == "doctrine://default" and
+                     .services.mautic_web.environment.MAUTIC_MESSENGER_DSN_HIT == "doctrine://default" and
+                     .services.mautic_worker.environment.PHP_INI_VALUE_MEMORY_LIMIT == "256M" and
+                     (.services.mautic_cron.environment | has("WALLZA_SSO_HMAC_SECRET") | not) and
+                     (.services.mautic_worker.environment | has("WALLZA_SSO_HMAC_SECRET") | not)' >/dev/null

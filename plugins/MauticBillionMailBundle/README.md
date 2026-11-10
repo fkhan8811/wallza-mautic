@@ -1,0 +1,96 @@
+# WallzaOS BillionMail SMTP transport
+
+This plugin is packaged as a Mautic 7 plugin (`mautic/plugin-wallza-billionmail`) and adds two explicit Symfony Mailer DSN schemes:
+
+- `billionmail+smtp://` for SMTP submission with STARTTLS negotiation.
+- `billionmail+smtps://` for implicit TLS (normally port 465).
+
+The plugin delegates message delivery to Symfony's native ESMTP transport. Mautic still renders the email, expands contact tokens, manages campaign queues, applies its own tracking and unsubscribe links, and records its normal send results. BillionMail is the SMTP delivery server.
+
+## Configure
+
+1. In BillionMail, create a domain and mailbox, then retrieve the SMTP submission host, port, username and password made available for that mailbox.
+2. Confirm the SMTP submission endpoint is reachable from the Mautic application/container. Use the hostname covered by the server's TLS certificate.
+3. In Mautic, open **Settings → Configuration → Email Settings** and set the mailer DSN to one of these patterns.
+
+STARTTLS example:
+
+```text
+billionmail+smtp://MAILBOX_USER:URL_ENCODED_PASSWORD@mail.example.com:587?auto_tls=true&require_tls=true
+```
+
+Implicit TLS example:
+
+```text
+billionmail+smtps://MAILBOX_USER:URL_ENCODED_PASSWORD@mail.example.com:465?require_tls=true
+```
+
+BillionMail's current fork configuration defines these default ports:
+
+| Service | Default port | Mautic use |
+|---|---:|---|
+| Postfix submission | 587 | Recommended; the supplied Postfix configuration enforces STARTTLS |
+| Postfix SMTPS | 465 | Alternative; implicit TLS |
+| Postfix SMTP | 25 | Server-to-server SMTP; do not use as the authenticated mailbox submission port |
+| Dovecot IMAPS | 993 | Recommended for Mautic monitored bounces/unsubscribes |
+| Dovecot IMAP | 143 | Plain IMAP listener; do not use over an untrusted network |
+
+Use the deployed `BILLIONMAIL_HOSTNAME` as the host and the password of a real mailbox. BillionMail mailbox usernames are full addresses (for example, `marketing@example.com`), so URL-encode the `@` as `%40` in the DSN. URL-encode reserved password characters too. These default ports are configurable in BillionMail's compose environment, so verify the deployed values before use. When the port is omitted, `billionmail+smtp` defaults to `587` and `billionmail+smtps` defaults to `465`.
+
+Optional throughput controls:
+
+```text
+billionmail+smtp://USER:PASSWORD@mail.example.com:587?auto_tls=true&require_tls=true&max_per_second=4&restart_threshold=100
+```
+
+- `max_per_second`: per-process send rate limit; omit to leave Symfony's default behavior.
+- `restart_threshold`: recycle the SMTP connection after the configured number of messages.
+- `restart_threshold_sleep`: optional pause in seconds after recycling.
+- `ping_threshold`: ping an idle connection after this many seconds.
+- `local_domain`: explicit EHLO/HELO name.
+- `source_ip`: bind the SMTP socket to a source IP when the host supports it.
+
+TLS is required by default, and certificate verification is enabled. An administrator can explicitly disable the TLS requirement with `require_tls=false` only when the endpoint is intentionally trusted on a private network. This plugin intentionally does not add an option to turn certificate verification off.
+
+## Important distinction: BillionMail API versus SMTP
+
+BillionMail's documented HTTP Send API is template-based: an API key is associated with a BillionMail email template, and the send request supplies a recipient, sender and template attributes. It does not accept the arbitrary rendered HTML body produced by a Mautic campaign. Therefore this plugin uses SMTP for normal Mautic campaigns rather than silently replacing Mautic email content with a BillionMail-side template.
+
+BillionMail's **SMTP Relay** settings configure how BillionMail itself forwards outbound messages to an external provider such as SES or Mailgun. They are not the SMTP host credentials Mautic should automatically copy. Use the mailbox/submission endpoint and credentials supplied by your actual deployment.
+
+## Install / discover
+
+The bundle is located under `plugins/MauticBillionMailBundle` and includes Composer package metadata. In a source-based Mautic deployment, deploy this plugin folder with the Mautic code, run the normal Composer/autoload and Mautic cache-clear/plugin-discovery procedure for your release, then confirm the bundle and `mailer.transport_factory` service are present in the compiled container. Do this in staging first; do not assume that placing files on disk alone activates the plugin.
+
+## Mautic's native IMAP feedback processing
+
+SMTP delivery and mailbox feedback are separate connections. Mautic already includes an IMAP monitored-inbox subsystem, so a provider webhook is not required for ordinary bounce and unsubscribe mailbox processing when BillionMail exposes the relevant mailbox over IMAP.
+
+In **Settings → Configuration → Email Settings → Monitored Inbox Settings**:
+
+1. Configure the **Default Mailbox** with the IMAP host, IMAP port, TLS mode, username and password of the BillionMail mailbox that receives feedback messages. Use the real values shown by your deployment; do not assume the SMTP submission hostname and IMAP host are identical.
+2. Configure the **Bounces** folder to the IMAP folder that receives non-delivery reports for the Mautic sending identity. It can use the default mailbox connection or its own override settings.
+3. Optionally configure **Unsubscribe Requests** and **Contact Replies** folders if those message types are routed into dedicated folders. Route abuse/feedback-loop complaint reports into the **Unsubscribe Requests** folder as well: Mautic's native unsubscribe subscriber runs both the unsubscribe parser and the abuse feedback-loop parser for that monitored folder.
+4. Set **Monitored address** to the address used for monitored feedback and return-path processing.
+5. Use **Test connection and fetch folders** to verify IMAP connectivity and folder visibility before scheduling the fetch command.
+
+Mautic's native `mautic:email:fetch` command reads the configured monitored mailboxes. The EmailBundle bounce subscriber invokes the native bounce parser and updates matched campaign statistics and email Do-Not-Contact records. The unsubscribe subscriber and feedback-loop processor also apply their native suppression handling. Make sure the PHP IMAP extension is installed and enabled in the Mautic runtime; Mautic's own configuration labels monitored-email features unavailable when that extension is missing. In the supplied `deploy/oracle/` stack, `mautic_cron` mounts `deploy/oracle/mautic-cron`, which enables `mautic:email:fetch --message-limit=100` every minute while preserving the regular segment/campaign schedule. For other Mautic deployments, add an equivalent monitored-email cron entry after verifying mailbox access and folder routing. Do not run it from the public WhatsApp API process.
+
+This is **IMAP inbox processing**, not a BillionMail webhook integration. It only works for feedback messages actually delivered into the configured mailbox/folder, and contact matching depends on Mautic's bounce addresses, headers and message/stat records. Test representative hard-bounce, soft-bounce, unsubscribe and complaint samples before enabling production campaigns.
+
+## Verify
+
+1. Save the DSN in Mautic and use **Test Connection**.
+2. Send a sample email to a controlled mailbox.
+3. Confirm the message arrives and that Mautic records the send.
+4. Run a small campaign against test contacts before enabling a production segment.
+5. Confirm SPF, DKIM and DMARC for the sender domain, and check BillionMail logs/queue for delivery failures.
+
+## Scope and limitations
+
+- This is an SMTP transport adapter, not a BillionMail management API client.
+- Mautic's native IMAP monitored-inbox flow can process bounce/unsubscribe/FBL messages placed in its configured folders; this plugin does not create BillionMail webhooks or guarantee BillionMail will route each provider event to those folders.
+- This adapter deliberately uses Mautic's ordinary per-contact SMTP send path. It does not use Mautic's `TokenTransportInterface` for provider-side batch tokenization and does not add asynchronous provider callback handling.
+- BillionMail's public Send API does not currently provide a documented callback contract in the inspected fork for mapping provider delivery/bounce events back into Mautic. Provider-side delivery reconciliation is therefore not claimed as implemented here.
+- The plugin does not implement tenant isolation. WallzaOS tenant authorization must be enforced by the actual WallzaOS backend and/or separate Mautic deployment/database boundaries before exposing this service to multiple customer workspaces.
+- SMTP credentials must be stored only in Mautic's protected configuration/secret store and must never be sent to browsers or committed to Git.
