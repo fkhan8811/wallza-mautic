@@ -147,14 +147,20 @@ final readonly class WallzaSsoSubscriber implements EventSubscriberInterface
             throw new \RuntimeException('Wallza SSO token response did not contain an assertion.');
         }
 
-        $claims = $this->assertionVerifier->verify($assertion, $expectedState);
-        $email  = strtolower(trim($claims['email']));
+        $claims  = $this->assertionVerifier->verify($assertion, $expectedState);
+        $email   = strtolower(trim($claims['email']));
+        $subject = $claims['sub'];
 
-        // User accounts are provisioned through the tenant's protected Mautic API credential.
-        // A browser SSO assertion cannot create users or assign Mautic roles.
-        $user = $this->userRepository->findOneBy(['email' => $email]);
-        if (!$user instanceof User || !$user->isPublished()) {
-            throw new \RuntimeException('The Wallza user is not provisioned or enabled in this Mautic tenant.');
+        // The stable Supabase subject is provisioned as this tenant's Mautic username.
+        // Verified email is a second binding check; email alone is not a durable identity key.
+        // SSO never creates local users or assigns local Mautic roles.
+        $user       = $this->userRepository->findOneBy(['username' => $subject]);
+        $localEmail = $user instanceof User ? $user->getEmail() : null;
+        if (!$user instanceof User || !$user->isPublished()
+            || !is_string($localEmail)
+            || !hash_equals($email, strtolower(trim($localEmail)))
+        ) {
+            throw new \RuntimeException('The Wallza user is not provisioned, enabled or consistently mapped in this Mautic tenant.');
         }
 
         // Keep the Mautic role assigned by the tenant administrator. Never elevate from an IdP role claim.
