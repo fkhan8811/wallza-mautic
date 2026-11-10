@@ -1,6 +1,6 @@
 # WallzaOS Mautic — Tenant Isolation Design
 
-**Status:** Design baseline; implementation not yet certified  
+**Status:** Interim per-tenant deployment boundary implemented as a repeatable Oracle Compose template; not yet deployed or capacity-tested  
 **Baseline:** Mautic 7.2.2  
 **Identity discovery:** The connected Lovable project named `WallzaOS` is the public website/admin CMS. The connected `fkhan8811/Whatsapp` repo is the actual product backend reference: Supabase Auth user identity; `organizations` as tenant; `organization_members` and `agents` membership; `user_roles`, `permissions`, `role_permissions` and `user_permissions_override` for role/permission checks. Its server-side `requireOrganizationAccess` validates a bearer token with `supabase.auth.getUser(token)` and checks membership in the requested organization. Its `authorizeMetaOrganization` adds the stricter `integrations.manage` permission check. The website CMS has a separate content-team RBAC model; it is not the product-app tenant model.
 
@@ -10,7 +10,19 @@ Every customer workspace must be unable to read, mutate, infer, export, send to,
 
 Mautic's existing user ownership and own/other permissions are useful but do not constitute tenant isolation.
 
-## 2. Proposed identity model
+## 2. Initial deployment isolation decision
+
+For the first WallzaOS rollout, do **not** run multiple organizations in one Mautic database. Each organization receives a separate Mautic stack with its own MariaDB database, Mautic configuration volume, logs, uploaded media, private network and API credential. The image/code is shared, but customer data and runtime state are not.
+
+The repeatable template is in `deploy/oracle/`:
+- The image is pinned to the official Mautic 7.2.2 Apache release and copies the BillionMail plugin into the official Docker plugin directory.
+- MariaDB is the only Mautic application database; Supabase PostgreSQL remains the WallzaOS control plane.
+- Web, cron and Messenger worker containers run separately within the tenant's stack.
+- The Mautic web listener is bound to loopback and must sit behind the host HTTPS reverse proxy.
+- The tenant provisioner creates a unique Compose project, random DB credentials and separate named volumes/network for each tenant slug; it refuses to overwrite an existing tenant env file.
+
+This template is a manual data-plane isolation mechanism, not the finished SaaS control plane. It has not yet been deployed on the Oracle host, load-tested alongside the other WallzaOS services, or wired to Supabase self-service provisioning. The safe initial policy is one stack per authorized organization and no shared Mautic DB.
+## 3. WallzaOS identity and tenant mapping
 
 - WallzaOS remains the system of record for SaaS accounts, subscriptions and workspace membership.
 - A Mautic workspace maps to an immutable WallzaOS tenant identifier.
@@ -20,7 +32,7 @@ Mautic's existing user ownership and own/other permissions are useful but do not
 
 The WallzaOS reference backend has now been inspected. The exact Mautic bridge (OIDC/Supabase JWT validation, trusted reverse-proxy assertion, or server-to-server API gateway) still must be implemented. Mautic must validate the Supabase identity and organization membership through a trusted server-side path; the caller-supplied organization ID is a selector, never authorization. Do not trust custom headers from public clients.
 
-## 3. Current WallzaOS identity and tenant contract
+## 4. Current WallzaOS identity and tenant contract
 
 The existing WhatsApp backend establishes the following source-of-truth contract:
 
@@ -33,7 +45,7 @@ The existing backend's database migrations include older broad `auth.uid() IS NO
 
 Mautic has not yet been connected to this identity contract: no Supabase SSO, Mautic-user mapping, tenant-context resolver or organization-scoped Mautic entity filter has been implemented in this branch.
 
-## 4. Enforcement points
+## 5. Enforcement points
 
 Tenant context must be established and enforced at all of these boundaries:
 
@@ -50,7 +62,7 @@ Tenant context must be established and enforced at all of these boundaries:
 
 A filter alone is insufficient: background jobs and custom SQL can bypass ORM-level filters. Prefer explicit tenant-aware repository/service boundaries and fail closed if tenant context is missing for a tenant-bound operation.
 
-## 5. Data model direction
+## 6. Data model direction
 
 Before adding tenant columns, inventory every entity and table that can contain customer-owned or customer-derived data. Classify each as:
 
@@ -61,7 +73,7 @@ Before adding tenant columns, inventory every entity and table that can contain 
 
 For tenant-owned records, define the tenant key, uniqueness scope, indexes, foreign-key strategy and migration/backfill plan. Avoid indiscriminately adding a tenant column to every table.
 
-## 6. Required negative tests
+## 7. Required negative tests
 
 - Tenant A cannot GET, PATCH, DELETE or enumerate Tenant B contacts, segments, campaigns, emails or assets.
 - Tenant A cannot use guessed object IDs to access Tenant B objects.
@@ -73,17 +85,17 @@ For tenant-owned records, define the tenant key, uniqueness scope, indexes, fore
 - Imports, bulk operations and contact merges cannot cross tenant boundaries.
 - Platform support access is explicit, time-limited and audited.
 
-## 7. Rollout sequence
+## 8. Rollout sequence
 
 1. Map current WallzaOS authentication, tenant and user model.
-2. Produce Mautic entity/table ownership inventory.
-3. Add tenant context resolver and trusted identity mapping.
-4. Add tenant-aware repository/API enforcement for one vertical slice.
-5. Add background worker and webhook propagation.
-6. Add migrations and backfill strategy.
-7. Add cross-tenant negative tests.
-8. Expand entity coverage only after tests prove the first slice.
+2. Keep customer data separated using one Mautic stack/database per organization for the initial rollout.
+3. Implement a protected server-side tenant registry mapping authenticated organizations to Mautic URLs and API credentials.
+4. Implement membership-aware SSO/user provisioning and subscription/quota checks.
+5. Propagate the authorized tenant mapping through WallzaOS jobs, retries and webhook workflows.
+6. Add negative tests proving one organization cannot resolve or call another organization's Mautic stack.
+7. Capacity-test each stack on the actual Oracle host before expanding the number of tenants.
+8. Revisit shared-database tenant enforcement only as a separate architecture project; a Doctrine filter alone is insufficient.
 
-## 8. Release gate
+## 9. Release gate
 
 Do not enable multi-customer production onboarding until every tenant-owned data path has a documented enforcement point and the negative test suite passes. Single-tenant mode remains the safe fallback while this work is incomplete.
