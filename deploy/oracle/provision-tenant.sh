@@ -33,7 +33,14 @@ if [[ ! "$TENANT_SLUG" =~ ^[a-z0-9][a-z0-9-]{0,38}$ ]]; then
   exit 2
 fi
 
-if [[ ! "$HTTP_PORT" =~ ^[0-9]{1,5}$ ]] || (( HTTP_PORT < 1024 || HTTP_PORT > 65535 )); then
+if [[ ! "$HTTP_PORT" =~ ^[0-9]{1,5}$ ]]; then
+  echo "Port must contain 1-5 decimal digits." >&2
+  exit 2
+fi
+
+# Force base-10 interpretation so inputs such as 08080 are not treated as octal.
+HTTP_PORT=$((10#$HTTP_PORT))
+if (( HTTP_PORT < 1024 || HTTP_PORT > 65535 )); then
   echo "Port must be an integer between 1024 and 65535." >&2
   exit 2
 fi
